@@ -1,0 +1,38 @@
+{
+  "export": "validate_event",
+  "input": {
+    "attempt": 1,
+    "kind": "task",
+    "payload": "{\"ok\":true}",
+    "random": "9f86d081884c7d659a2feaa0c55ad015",
+    "run_id": "run_fixture",
+    "status": "succeeded",
+    "step_id": "task#1",
+    "ts_ms": 1700000000000,
+    "usage": {
+      "cost_micro_usd": 45,
+      "cpu_ms": 12,
+      "tokens": 300
+    }
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "normalized": {
+        "attempt": 1,
+        "kind": "task",
+        "payload": "{\"ok\":true}",
+        "random": "9f86d081884c7d659a2feaa0c55ad015",
+        "run_id": "run_fixture",
+        "status": "succeeded",
+        "step_id": "task#1",
+        "ts_ms": 1700000000000,
+        "usage": {
+          "cost_micro_usd": 45,
+          "cpu_ms": 12,
+          "tokens": 300
+        }
+      }
+    }
+  }
+}

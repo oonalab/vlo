@@ -1,0 +1,124 @@
+{
+  "export": "prepare_event",
+  "input": {
+    "event": {
+      "attempt": 0,
+      "cause": "user_cancel",
+      "kind": "marker",
+      "random": "9f86d081884c7d659a2feaa0c55ad015",
+      "run_id": "run_fixture",
+      "status": "cancelled",
+      "step_id": "cancel",
+      "ts_ms": 1700000000000
+    },
+    "kernel_state": {
+      "closed_steps": 0,
+      "status": "running",
+      "step_no": 2,
+      "steps": {
+        "task#1": {
+          "activity": "plan",
+          "attempt": 1,
+          "kind": "task",
+          "queue": "default",
+          "retry": {
+            "backoff": "exponential",
+            "factor": 2,
+            "initial_ms": 1000,
+            "jitter": "full",
+            "max_attempts": 3,
+            "max_ms": 600000
+          },
+          "status": "running"
+        },
+        "task#2": {
+          "activity": "plan",
+          "attempt": 1,
+          "kind": "task",
+          "queue": "default",
+          "retry": {
+            "backoff": "exponential",
+            "factor": 2,
+            "initial_ms": 1000,
+            "jitter": "full",
+            "max_attempts": 3,
+            "max_ms": 600000
+          },
+          "status": "scheduled"
+        }
+      },
+      "usage_total": {
+        "cost_micro_usd": 0,
+        "cpu_ms": 0,
+        "tokens": 0
+      },
+      "v": 1
+    },
+    "run": {
+      "bundle_digest": "sha256:bundle",
+      "last_seq": 5,
+      "run_id": "run_fixture",
+      "status": "running",
+      "workflow": "example"
+    },
+    "state": "{\"phase\":\"work\"}"
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "mode": "lifecycle",
+      "transition": {
+        "emits": [],
+        "events": [
+          {
+            "attempt": 0,
+            "cause": "user_cancel",
+            "kind": "marker",
+            "random": "9f86d081884c7d659a2feaa0c55ad015",
+            "run_id": "run_fixture",
+            "seq": 6,
+            "state_hash": "500a95ecb95627245af712658882d00ce42419da079049a24e3c78be50213093",
+            "status": "cancelled",
+            "step_id": "cancel",
+            "ts_ms": 1700000000000
+          }
+        ],
+        "kernel_state": {
+          "closed_steps": 2,
+          "status": "cancelled",
+          "step_no": 2,
+          "steps": {},
+          "usage_total": {
+            "cost_micro_usd": 0,
+            "cpu_ms": 0,
+            "tokens": 0
+          },
+          "v": 1
+        },
+        "run": {
+          "last_seq": 6,
+          "status": "cancelled"
+        },
+        "signal_waits": [],
+        "spawns": [],
+        "state": "{\"phase\":\"work\"}",
+        "state_hash": "500a95ecb95627245af712658882d00ce42419da079049a24e3c78be50213093",
+        "state_inline": true,
+        "task_updates": [
+          {
+            "attempt": 1,
+            "status": "cancelled",
+            "task_id": "run_fixture:task#1"
+          },
+          {
+            "attempt": 1,
+            "status": "cancelled",
+            "task_id": "run_fixture:task#2"
+          }
+        ],
+        "tasks": [],
+        "timers": []
+      }
+    }
+  }
+}

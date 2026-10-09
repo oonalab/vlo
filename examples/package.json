@@ -1,0 +1,27 @@
+{
+  "name": "@vlo/examples",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Runnable Vlo examples: the smallest program, a fan-out pipeline with a human approval, and a budgeted agent loop.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev:hello": "tsx ../sdk/ts/sdk/src/cli.ts dev --config hello/vlo.config.ts",
+    "dev:pipeline": "tsx ../sdk/ts/sdk/src/cli.ts dev --config pipeline/vlo.config.ts",
+    "dev:agent": "tsx ../sdk/ts/sdk/src/cli.ts dev --config agent/vlo.config.ts"
+  },
+  "dependencies": {
+    "@vlo/agent": "workspace:*",
+    "@vlo/sdk": "workspace:*",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

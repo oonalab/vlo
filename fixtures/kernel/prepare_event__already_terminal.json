@@ -1,0 +1,58 @@
+{
+  "export": "prepare_event",
+  "input": {
+    "event": {
+      "attempt": 1,
+      "kind": "task",
+      "random": "9f86d081884c7d659a2feaa0c55ad015",
+      "run_id": "run_fixture",
+      "status": "succeeded",
+      "step_id": "task#1",
+      "ts_ms": 1700000000000
+    },
+    "kernel_state": {
+      "closed_steps": 0,
+      "status": "running",
+      "step_no": 1,
+      "steps": {
+        "task#1": {
+          "activity": "plan",
+          "attempt": 2,
+          "kind": "task",
+          "queue": "default",
+          "retry": {
+            "backoff": "exponential",
+            "factor": 2,
+            "initial_ms": 1000,
+            "jitter": "full",
+            "max_attempts": 3,
+            "max_ms": 600000
+          },
+          "status": "running"
+        }
+      },
+      "usage_total": {
+        "cost_micro_usd": 0,
+        "cpu_ms": 0,
+        "tokens": 0
+      },
+      "v": 1
+    },
+    "run": {
+      "bundle_digest": "sha256:bundle",
+      "last_seq": 2,
+      "run_id": "run_fixture",
+      "status": "running",
+      "workflow": "example"
+    },
+    "state": "null"
+  },
+  "output": {
+    "error": {
+      "code": "already_terminal",
+      "message": "event is for attempt 1, step is on attempt 2",
+      "step_id": "task#1"
+    },
+    "ok": false
+  }
+}

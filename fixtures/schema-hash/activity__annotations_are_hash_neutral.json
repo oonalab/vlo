@@ -1,0 +1,107 @@
+{
+  "kind": "activity",
+  "name": "example.work",
+  "retry": {
+    "max_attempts": 3,
+    "backoff": "exponential",
+    "initial_ms": 1000,
+    "max_ms": 600000,
+    "factor": 2,
+    "jitter": "full"
+  },
+  "cases": [
+    {
+      "input": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "upper": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "upper"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Work input",
+        "description": "What to shout",
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "description": "The item",
+            "examples": [
+              "a"
+            ],
+            "default": "x"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      },
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:out",
+        "$comment": "n/a",
+        "deprecated": false,
+        "readOnly": true,
+        "type": "object",
+        "properties": {
+          "upper": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "upper"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "projected": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "item"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "upper": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "upper"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "hash": "4f996ab5a654b355",
+  "schema_ref": "example.work@4f996ab5a654b355"
+}

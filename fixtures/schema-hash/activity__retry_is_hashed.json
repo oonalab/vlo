@@ -1,0 +1,68 @@
+{
+  "kind": "activity",
+  "name": "example.work",
+  "retry": {
+    "max_attempts": 7,
+    "backoff": "exponential",
+    "initial_ms": 1000,
+    "max_ms": 600000,
+    "factor": 2,
+    "jitter": "full"
+  },
+  "cases": [
+    {
+      "input": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "upper": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "upper"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "projected": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "item"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "upper": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "upper"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "hash": "acdff78b368e25e6",
+  "schema_ref": "example.work@acdff78b368e25e6"
+}

@@ -1,0 +1,61 @@
+{
+  "name": "@vlo/agent",
+  "version": "0.1.0",
+  "description": "Vlo agent layer: decide → tool → evaluate as a pure reducer, with a budget that parks the run instead of failing it.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oona/orbi.git",
+    "directory": "packages/vlo/sdk/ts/agent"
+  },
+  "homepage": "https://github.com/oona/orbi/tree/main/packages/vlo#readme",
+  "bugs": "https://github.com/oona/orbi/issues",
+  "keywords": [
+    "agents",
+    "llm",
+    "workflow",
+    "durable-execution",
+    "budget"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepack": "cp ../../../LICENSE ../../../NOTICE ."
+  },
+  "dependencies": {
+    "@vlo/sdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsdown": "^0.23.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.9",
+    "zod": "^4.0.0"
+  }
+}

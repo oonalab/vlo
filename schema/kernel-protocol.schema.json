@@ -1,0 +1,2042 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KernelProtocol",
+  "description": "One root type that references every wire type, so a single schema file carries them\nall under `$defs`.",
+  "type": "object",
+  "properties": {
+    "command": {
+      "$ref": "#/$defs/Command"
+    },
+    "derive_ids_input": {
+      "$ref": "#/$defs/DeriveIdsInput"
+    },
+    "derive_ids_output": {
+      "$ref": "#/$defs/DeriveIdsOutput"
+    },
+    "envelope": {
+      "$ref": "#/$defs/Envelope"
+    },
+    "event_input": {
+      "$ref": "#/$defs/EventInput"
+    },
+    "kernel_error": {
+      "$ref": "#/$defs/KernelError"
+    },
+    "kernel_state": {
+      "$ref": "#/$defs/KernelState"
+    },
+    "plan_retry_input": {
+      "$ref": "#/$defs/PlanRetryInput"
+    },
+    "prepare_event_input": {
+      "$ref": "#/$defs/PrepareEventInput"
+    },
+    "prepared": {
+      "$ref": "#/$defs/Prepared"
+    },
+    "reduce_step_input": {
+      "$ref": "#/$defs/ReduceStepInput"
+    },
+    "reducer_event": {
+      "$ref": "#/$defs/ReducerEvent"
+    },
+    "reduction": {
+      "$ref": "#/$defs/Reduction"
+    },
+    "refold_check_input": {
+      "$ref": "#/$defs/RefoldCheckInput"
+    },
+    "refold_check_output": {
+      "$ref": "#/$defs/RefoldCheckOutput"
+    },
+    "retry_plan": {
+      "$ref": "#/$defs/RetryPlan"
+    },
+    "run_ref": {
+      "$ref": "#/$defs/RunRef"
+    },
+    "state_hash_input": {
+      "$ref": "#/$defs/StateHashInput"
+    },
+    "state_hash_output": {
+      "$ref": "#/$defs/StateHashOutput"
+    },
+    "transition": {
+      "$ref": "#/$defs/Transition"
+    },
+    "validate_event_output": {
+      "$ref": "#/$defs/ValidateEventOutput"
+    },
+    "version": {
+      "$ref": "#/$defs/KernelVersion"
+    }
+  },
+  "required": [
+    "version",
+    "event_input",
+    "envelope",
+    "command",
+    "reduction",
+    "kernel_state",
+    "run_ref",
+    "transition",
+    "prepare_event_input",
+    "prepared",
+    "reducer_event",
+    "reduce_step_input",
+    "state_hash_input",
+    "state_hash_output",
+    "plan_retry_input",
+    "retry_plan",
+    "refold_check_input",
+    "refold_check_output",
+    "derive_ids_input",
+    "derive_ids_output",
+    "kernel_error",
+    "validate_event_output"
+  ],
+  "$defs": {
+    "Backoff": {
+      "description": "How the delay grows between attempts.",
+      "oneOf": [
+        {
+          "description": "Every retry waits `initial_ms`.",
+          "type": "string",
+          "const": "fixed"
+        },
+        {
+          "description": "The delay is `initial_ms * factor^(attempt - 1)`, capped at `max_ms`.",
+          "type": "string",
+          "const": "exponential"
+        }
+      ]
+    },
+    "Cause": {
+      "description": "Failure taxonomy. Retry policy is keyed on this, never on application error text.",
+      "oneOf": [
+        {
+          "description": "The attempt exceeded its wall-clock budget (`timeout_ms`). Retryable.",
+          "type": "string",
+          "const": "timeout"
+        },
+        {
+          "description": "The worker stopped heartbeating and its lease expired. Retryable.",
+          "type": "string",
+          "const": "heartbeat_lost"
+        },
+        {
+          "description": "The activity threw. Retryable.",
+          "type": "string",
+          "const": "app_error"
+        },
+        {
+          "description": "The user cancelled the run. Never retried.",
+          "type": "string",
+          "const": "user_cancel"
+        },
+        {
+          "description": "The worker's output failed schema validation. Never retried.",
+          "type": "string",
+          "const": "schema_violation"
+        },
+        {
+          "description": "A re-fold diverged from the journal. Never retried.",
+          "type": "string",
+          "const": "nondeterminism_detected"
+        }
+      ]
+    },
+    "Command": {
+      "description": "What a reducer asks the kernel for. Seven commands, closed set (see `docs/workflows.md`).\n\n`id` lets a reducer name a step explicitly (needed for fan-out bookkeeping);\notherwise the kernel derives `<kind>#<n>` from `KernelState::step_no`.",
+      "oneOf": [
+        {
+          "description": "Dispatch an activity to a worker; opens a `task` step in `scheduled`.",
+          "type": "object",
+          "properties": {
+            "activity": {
+              "description": "Activity name the worker dispatches on.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Explicit step id; `task#<n>` when `None`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "input": {
+              "description": "Activity input."
+            },
+            "lease_ttl_ms": {
+              "description": "Lease duration in milliseconds; `60_000` when `None`.",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0
+            },
+            "queue": {
+              "description": "Queue to push to; `default` when `None`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "retry": {
+              "description": "Retry policy; the default policy when `None`.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/RetryPolicy"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "schema_ref": {
+              "description": "Input schema reference (`<name>@<content-hash>`).",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "timeout_ms": {
+              "description": "Wall-clock budget for one attempt. The worker aborts at it; the host's backstop\nreaps the attempt if the worker never answers.",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "const": "task"
+            }
+          },
+          "required": [
+            "type",
+            "activity",
+            "input"
+          ]
+        },
+        {
+          "description": "Open a `timer` step that fires at an absolute or relative time.",
+          "type": "object",
+          "properties": {
+            "fire_at_ms": {
+              "description": "Absolute fire time in milliseconds since the Unix epoch. One of the two is required.",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0
+            },
+            "fire_in_ms": {
+              "description": "Delay in milliseconds from the event's `ts_ms`; ignored when `fire_at_ms` is set.",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0
+            },
+            "id": {
+              "description": "Explicit step id; `timer#<n>` when `None`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "type": "string",
+              "const": "timer"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "description": "Start a child run; opens a `child` step in `scheduled`.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "description": "Explicit step id; `child#<n>` when `None`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "input": {
+              "description": "Child run input."
+            },
+            "type": {
+              "type": "string",
+              "const": "spawn"
+            },
+            "workflow": {
+              "description": "Workflow name of the child.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "workflow",
+            "input"
+          ]
+        },
+        {
+          "description": "Park on a named signal; opens a `signal` step in `awaiting_signal`.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "description": "Explicit step id; `signal#<n>` when `None`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "description": "Signal name.",
+              "type": "string"
+            },
+            "schema_ref": {
+              "description": "Payload schema reference (`<name>@<content-hash>`).",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "timeout_ms": {
+              "description": "Wait budget in milliseconds; `None` waits forever.",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "const": "await_signal"
+            }
+          },
+          "required": [
+            "type",
+            "name"
+          ]
+        },
+        {
+          "description": "Publish to a side channel. Never journaled, never replayed.",
+          "type": "object",
+          "properties": {
+            "channel": {
+              "description": "Channel name.",
+              "type": "string"
+            },
+            "data": {
+              "description": "Payload."
+            },
+            "type": {
+              "type": "string",
+              "const": "emit"
+            }
+          },
+          "required": [
+            "type",
+            "channel",
+            "data"
+          ]
+        },
+        {
+          "description": "End the run as `completed`. Must be the last command of the reduction.",
+          "type": "object",
+          "properties": {
+            "output": {
+              "description": "Workflow output."
+            },
+            "type": {
+              "type": "string",
+              "const": "complete"
+            }
+          },
+          "required": [
+            "type",
+            "output"
+          ]
+        },
+        {
+          "description": "End the run as `continued` and start a successor with `input`. Must be the last\ncommand of the reduction.",
+          "type": "object",
+          "properties": {
+            "input": {
+              "description": "Input for the successor run."
+            },
+            "type": {
+              "type": "string",
+              "const": "continue_as_new"
+            }
+          },
+          "required": [
+            "type",
+            "input"
+          ]
+        }
+      ]
+    },
+    "Completion": {
+      "description": "The run's terminal outcome.",
+      "type": "object",
+      "properties": {
+        "output": {
+          "description": "Workflow output for `completed`; `None` for `continued`."
+        },
+        "status": {
+          "description": "`completed` or `continued`.",
+          "$ref": "#/$defs/RunStatus"
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "ContinueAsNew": {
+      "description": "Input for the successor run when the reducer issued `continue_as_new`.",
+      "type": "object",
+      "properties": {
+        "input": {
+          "description": "Input for the successor run."
+        }
+      },
+      "required": [
+        "input"
+      ]
+    },
+    "DeriveIdsInput": {
+      "description": "Input to `derive_ids`.",
+      "type": "object",
+      "properties": {
+        "attempt": {
+          "description": "Attempt for the idempotency key.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "run_id": {
+          "description": "Run identifier.",
+          "type": "string"
+        },
+        "step_id": {
+          "description": "Step identifier.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "step_id",
+        "attempt"
+      ]
+    },
+    "DeriveIdsOutput": {
+      "description": "Output of `derive_ids`.",
+      "type": "object",
+      "properties": {
+        "child_run_id": {
+          "description": "`run_` followed by the first 26 hex chars of `sha256(task_id)`.",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "description": "`<run_id>:<step_id>:<attempt>`.",
+          "type": "string"
+        },
+        "task_id": {
+          "description": "`<run_id>:<step_id>`.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id",
+        "idempotency_key",
+        "child_run_id"
+      ]
+    },
+    "Emit": {
+      "description": "A side-channel emission. Never journaled.",
+      "type": "object",
+      "properties": {
+        "channel": {
+          "description": "Channel name.",
+          "type": "string"
+        },
+        "data": {
+          "description": "Payload."
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ]
+    },
+    "Envelope": {
+      "description": "A journaled event: `EventInput` plus the kernel-assigned sequence number and the\nstate hash after folding it (so a re-fold can pinpoint the divergent seq).",
+      "type": "object",
+      "properties": {
+        "attempt": {
+          "description": "Task attempt this event is about (1-based); a `retrying` event names the *next*\nattempt. `0` for every other kind.",
+          "type": "integer",
+          "format": "uint32",
+          "default": 0,
+          "minimum": 0
+        },
+        "cause": {
+          "description": "Failure cause on `failed` / `retrying` events; `None` otherwise.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Cause"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "description": "Free-text error detail for `failed` task events. Never interpreted by the kernel.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "description": "Event kind; the kernel routes on `kind`, `status` and `step_id`.",
+          "$ref": "#/$defs/Kind"
+        },
+        "parent_run_id": {
+          "description": "The parent run, when this run was spawned as a child.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "parent_step_id": {
+          "description": "The parent's `spawn` step, when this run was spawned as a child.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "payload": {
+          "description": "Inline JSON payload, byte-exact. Exactly one of `payload` / `payload_ref` may be set.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "payload_ref": {
+          "description": "`blob://sha256/<hex>` when the payload was offloaded.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "random": {
+          "description": "32 lowercase hex chars of host-generated randomness, journaled for replay.",
+          "type": "string"
+        },
+        "run_id": {
+          "description": "The run this event belongs to.",
+          "type": "string"
+        },
+        "schema_ref": {
+          "description": "Schema the payload conforms to (`<name>@<content-hash>`), when known.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "seq": {
+          "description": "Sequence number assigned by the journal writer; strictly increasing per run,\nstarting at `1`.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "state_hash": {
+          "description": "Hash of `(kernel_state, state)` after the transition that produced this event\n(see `docs/kernel-protocol.md`).",
+          "type": "string"
+        },
+        "status": {
+          "description": "The step status this event moves the step to.",
+          "$ref": "#/$defs/Status"
+        },
+        "step_id": {
+          "description": "The step this event belongs to; `start` for the `started` marker.",
+          "type": "string"
+        },
+        "ts_ms": {
+          "description": "Host wall-clock at submission, in milliseconds since the Unix epoch. The reducer's\nonly clock.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "usage": {
+          "description": "Resources this event consumed; banked into `KernelState::usage_total`.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Usage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "run_id",
+        "step_id",
+        "kind",
+        "status",
+        "ts_ms",
+        "random",
+        "seq",
+        "state_hash"
+      ]
+    },
+    "EventInput": {
+      "description": "An event as the host submits it, before the kernel assigns `seq` and `state_hash`.\n\n`random` is 32 hex chars of host-generated randomness, journaled so that every\nconsumer of randomness (retry jitter, reducer `random`) is replay-stable.",
+      "type": "object",
+      "properties": {
+        "attempt": {
+          "description": "Task attempt this event is about (1-based); a `retrying` event names the *next*\nattempt. `0` for every other kind.",
+          "type": "integer",
+          "format": "uint32",
+          "default": 0,
+          "minimum": 0
+        },
+        "cause": {
+          "description": "Failure cause on `failed` / `retrying` events; `None` otherwise.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Cause"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "description": "Free-text error detail for `failed` task events. Never interpreted by the kernel.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "description": "Event kind; the kernel routes on `kind`, `status` and `step_id`.",
+          "$ref": "#/$defs/Kind"
+        },
+        "payload": {
+          "description": "Inline JSON payload, byte-exact. Exactly one of `payload` / `payload_ref` may be set.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "payload_ref": {
+          "description": "`blob://sha256/<hex>` when the payload was offloaded.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "random": {
+          "description": "32 lowercase hex chars of host-generated randomness, journaled for replay.",
+          "type": "string"
+        },
+        "run_id": {
+          "description": "The run this event belongs to.",
+          "type": "string"
+        },
+        "schema_ref": {
+          "description": "Schema the payload conforms to (`<name>@<content-hash>`), when known.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "description": "The step status this event moves the step to.",
+          "$ref": "#/$defs/Status"
+        },
+        "step_id": {
+          "description": "The step this event belongs to; `start` for the `started` marker.",
+          "type": "string"
+        },
+        "ts_ms": {
+          "description": "Host wall-clock at submission, in milliseconds since the Unix epoch. The reducer's\nonly clock.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "usage": {
+          "description": "Resources this event consumed; banked into `KernelState::usage_total`.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Usage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "run_id",
+        "step_id",
+        "kind",
+        "status",
+        "ts_ms",
+        "random"
+      ]
+    },
+    "HashAtSeq": {
+      "description": "A `(seq, state_hash)` pair, from the journal or from a re-fold.",
+      "type": "object",
+      "properties": {
+        "hash": {
+          "description": "State hash after that seq.",
+          "type": "string"
+        },
+        "seq": {
+          "description": "Sequence number.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "seq",
+        "hash"
+      ]
+    },
+    "Jitter": {
+      "description": "Randomization applied to the computed delay.",
+      "oneOf": [
+        {
+          "description": "Use the computed delay as-is.",
+          "type": "string",
+          "const": "none"
+        },
+        {
+          "description": "Full jitter: scale the delay by a uniform fraction taken from `random`, so the\nresult lies in `[0, delay]`.",
+          "type": "string",
+          "const": "full"
+        }
+      ]
+    },
+    "KernelError": {
+      "description": "A kernel failure. `code` is one of the closed set the kernel defines; the host\nbranches on it, never on `message`.",
+      "type": "object",
+      "properties": {
+        "code": {
+          "description": "Machine-readable code, e.g. `invalid_event`.",
+          "type": "string"
+        },
+        "message": {
+          "description": "Human-readable detail. Not stable; never branch on it.",
+          "type": "string"
+        },
+        "seq": {
+          "description": "The seq the failure concerns, when it concerns one.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "step_id": {
+          "description": "The step the failure concerns, when it concerns one.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ]
+    },
+    "KernelState": {
+      "description": "Kernel-owned state persisted beside the user's state and included in the state hash.\nTerminal steps are pruned deterministically (`closed_steps` keeps the count) so the\nstructure stays bounded on long runs.",
+      "type": "object",
+      "properties": {
+        "closed_steps": {
+          "description": "Number of steps pruned from `steps` so far.",
+          "type": "integer",
+          "format": "uint64",
+          "default": 0,
+          "minimum": 0
+        },
+        "status": {
+          "description": "Run-level status as the kernel derives it from the open steps.",
+          "$ref": "#/$defs/RunStatus"
+        },
+        "step_no": {
+          "description": "Monotonic counter used to derive default step ids.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "steps": {
+          "description": "Open steps keyed by step id. Terminal steps are removed, not kept.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/StepState"
+          }
+        },
+        "usage_total": {
+          "description": "Usage banked across every event of the run, retried attempts included.",
+          "$ref": "#/$defs/Usage",
+          "default": {
+            "cost_micro_usd": 0,
+            "cpu_ms": 0,
+            "tokens": 0
+          }
+        },
+        "v": {
+          "description": "Format version of this structure; currently `1`.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "v",
+        "status",
+        "step_no",
+        "steps"
+      ]
+    },
+    "KernelVersion": {
+      "description": "Output of `kernel_version`.",
+      "type": "object",
+      "properties": {
+        "features": {
+          "description": "Feature names the host may branch on. Additive only.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "protocol": {
+          "description": "Protocol version; the host refuses a kernel whose value differs from its own.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "version": {
+          "description": "Crate version of the kernel.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "protocol",
+        "features"
+      ]
+    },
+    "Kind": {
+      "description": "The five event kinds. Projects cannot add kinds (see `docs/kernel-protocol.md`).",
+      "oneOf": [
+        {
+          "description": "An activity executed by a worker.",
+          "type": "string",
+          "const": "task"
+        },
+        {
+          "description": "A durable timer the host fires at `fire_at_ms`.",
+          "type": "string",
+          "const": "timer"
+        },
+        {
+          "description": "An external signal delivered to a parked `await_signal` step.",
+          "type": "string",
+          "const": "signal"
+        },
+        {
+          "description": "A child run spawned by this run.",
+          "type": "string",
+          "const": "child"
+        },
+        {
+          "description": "Kernel bookkeeping: `start`, `cancel`, `fail`, `complete`, `continue`, `nondeterminism`.",
+          "type": "string",
+          "const": "marker"
+        }
+      ]
+    },
+    "NewSpawn": {
+      "description": "A child run to create.",
+      "type": "object",
+      "properties": {
+        "child_run_id": {
+          "description": "Deterministic child run id (see `derive_ids`).",
+          "type": "string"
+        },
+        "input": {
+          "description": "Child run input."
+        },
+        "step_id": {
+          "description": "The parent's step that owns the child.",
+          "type": "string"
+        },
+        "workflow": {
+          "description": "Workflow name of the child.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "step_id",
+        "child_run_id",
+        "workflow",
+        "input"
+      ]
+    },
+    "NewTask": {
+      "description": "A task row to insert. It doubles as the outbox entry the host pushes to a worker.",
+      "type": "object",
+      "properties": {
+        "activity": {
+          "description": "Activity name the worker dispatches on.",
+          "type": "string"
+        },
+        "attempt": {
+          "description": "Always `1` for a new task.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "idempotency_key": {
+          "description": "`<run_id>:<step_id>:<attempt>`; unique per dispatch attempt.",
+          "type": "string"
+        },
+        "input": {
+          "description": "Activity input."
+        },
+        "lease_ttl_ms": {
+          "description": "Lease duration in milliseconds before the reaper may re-dispatch.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "queue": {
+          "description": "Queue the task is pushed to.",
+          "type": "string"
+        },
+        "retry": {
+          "description": "Retry policy resolved for this task.",
+          "$ref": "#/$defs/RetryPolicy"
+        },
+        "schema_ref": {
+          "description": "Input schema reference, when the reducer named one.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "step_id": {
+          "description": "The step that owns the task.",
+          "type": "string"
+        },
+        "task_id": {
+          "description": "`<run_id>:<step_id>`.",
+          "type": "string"
+        },
+        "timeout_ms": {
+          "description": "Per-attempt wall-clock budget in milliseconds; `None` means no budget.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "task_id",
+        "step_id",
+        "attempt",
+        "activity",
+        "queue",
+        "input",
+        "idempotency_key",
+        "retry",
+        "lease_ttl_ms"
+      ]
+    },
+    "NewTimer": {
+      "description": "A timer row to insert.",
+      "type": "object",
+      "properties": {
+        "fire_at_ms": {
+          "description": "Absolute fire time in milliseconds since the Unix epoch.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "step_id": {
+          "description": "The step that owns the timer.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "step_id",
+        "fire_at_ms"
+      ]
+    },
+    "PlanRetryInput": {
+      "description": "Input to `plan_retry`.",
+      "type": "object",
+      "properties": {
+        "attempt": {
+          "description": "The attempt that just failed (1-based).",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "cause": {
+          "description": "Why it failed. Non-retryable causes always yield `retry: false`.",
+          "$ref": "#/$defs/Cause"
+        },
+        "policy": {
+          "description": "Policy of the step that failed.",
+          "$ref": "#/$defs/RetryPolicy"
+        },
+        "random": {
+          "description": "Journaled randomness (32 hex chars); the only entropy source for jitter.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy",
+        "attempt",
+        "cause",
+        "random"
+      ]
+    },
+    "PrepareEventInput": {
+      "description": "Input to `prepare_event`.",
+      "type": "object",
+      "properties": {
+        "event": {
+          "description": "The event to prepare.",
+          "$ref": "#/$defs/EventInput"
+        },
+        "kernel_state": {
+          "description": "`None` only for the `started` event.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/KernelState"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "run": {
+          "description": "The run row as loaded under the run lock.",
+          "$ref": "#/$defs/RunRef"
+        },
+        "state": {
+          "description": "The current user-state checkpoint, byte-exact. Lifecycle transitions echo it and\nhash it without calling the reducer, so the host must pass it for any event that\nis not `started`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "run",
+        "event"
+      ]
+    },
+    "Prepared": {
+      "description": "Output of `prepare_event`: what the host does next.",
+      "oneOf": [
+        {
+          "description": "Call the reducer. For `started`, `init_input` is set: call `init(input)` first,\nthen `on.started`.",
+          "type": "object",
+          "properties": {
+            "init_input": {
+              "description": "Workflow input for `init`; set only for `started`."
+            },
+            "kernel_state": {
+              "description": "The kernel state to pass back into `reduce_step` (fresh for `started`).",
+              "$ref": "#/$defs/KernelState"
+            },
+            "mode": {
+              "type": "string",
+              "const": "reduce"
+            },
+            "reducer_event": {
+              "description": "The event to hand to the reducer.",
+              "$ref": "#/$defs/ReducerEvent"
+            }
+          },
+          "required": [
+            "mode",
+            "reducer_event",
+            "kernel_state"
+          ]
+        },
+        {
+          "description": "Pure bookkeeping (task `running`, `retrying`, `cancelled`, …). No reducer call;\napply the transition as-is. `state` in it echoes the current checkpoint.",
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "const": "lifecycle"
+            },
+            "transition": {
+              "description": "The write-set to apply as-is.",
+              "$ref": "#/$defs/Transition"
+            }
+          },
+          "required": [
+            "mode",
+            "transition"
+          ]
+        }
+      ]
+    },
+    "ReduceStepInput": {
+      "description": "Input to `reduce_step`.",
+      "type": "object",
+      "properties": {
+        "event": {
+          "description": "The trigger event, as passed to `prepare_event`.",
+          "$ref": "#/$defs/EventInput"
+        },
+        "kernel_state": {
+          "description": "The kernel state `prepare_event` returned.",
+          "$ref": "#/$defs/KernelState"
+        },
+        "reduction": {
+          "description": "What the reducer returned.",
+          "$ref": "#/$defs/Reduction"
+        },
+        "run": {
+          "description": "The run row as loaded under the run lock.",
+          "$ref": "#/$defs/RunRef"
+        }
+      },
+      "required": [
+        "run",
+        "kernel_state",
+        "event",
+        "reduction"
+      ]
+    },
+    "ReducerEvent": {
+      "description": "What the reducer sees. The kernel translates journal headers into these; the\nreducer never sees `seq`, `random` or lifecycle noise except where it needs them.\n\n`usage_total` rides on every variant: it is the run's banked total *including* this\nevent, so a reducer can decide on a budget without keeping its own tally\n(see `docs/workflows.md`).",
+      "oneOf": [
+        {
+          "description": "The run's first event, delivered right after `init(input)`.",
+          "type": "object",
+          "properties": {
+            "input": {
+              "description": "Workflow input."
+            },
+            "random": {
+              "description": "32 hex chars of journaled randomness; the reducer's only entropy.",
+              "type": "string"
+            },
+            "ts_ms": {
+              "description": "Event time in milliseconds since the Unix epoch; the reducer's clock.",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "const": "started"
+            },
+            "usage_total": {
+              "description": "Banked usage for the run, including this event.",
+              "$ref": "#/$defs/Usage",
+              "default": {
+                "cost_micro_usd": 0,
+                "cpu_ms": 0,
+                "tokens": 0
+              }
+            }
+          },
+          "required": [
+            "type",
+            "ts_ms",
+            "random",
+            "input"
+          ]
+        },
+        {
+          "description": "A task reached `succeeded` or `failed`.",
+          "type": "object",
+          "properties": {
+            "activity": {
+              "description": "Activity name recorded on the step.",
+              "type": "string"
+            },
+            "attempt": {
+              "description": "The attempt that finished (1-based).",
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0
+            },
+            "cause": {
+              "description": "Failure cause on `failed`.",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Cause"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "error": {
+              "description": "Free-text error detail on `failed`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "output": {
+              "description": "Worker output on `succeeded`."
+            },
+            "random": {
+              "description": "32 hex chars of journaled randomness; the reducer's only entropy.",
+              "type": "string"
+            },
+            "status": {
+              "description": "`succeeded` or `failed`.",
+              "$ref": "#/$defs/Status"
+            },
+            "step_id": {
+              "description": "The step that finished.",
+              "type": "string"
+            },
+            "ts_ms": {
+              "description": "Event time in milliseconds since the Unix epoch; the reducer's clock.",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "const": "task_done"
+            },
+            "usage": {
+              "description": "What this attempt itself consumed; zeroed when the worker reported none.",
+              "$ref": "#/$defs/Usage",
+              "default": {
+                "cost_micro_usd": 0,
+                "cpu_ms": 0,
+                "tokens": 0
+              }
+            },
+            "usage_total": {
+              "description": "Banked usage for the run, including this event.",
+              "$ref": "#/$defs/Usage",
+              "default": {
+                "cost_micro_usd": 0,
+                "cpu_ms": 0,
+                "tokens": 0
+              }
+            }
+          },
+          "required": [
+            "type",
+            "ts_ms",
+            "random",
+            "step_id",
+            "attempt",
+            "activity",
+            "status"
+          ]
+        },
+        {
+          "description": "A signal was delivered to a parked step.",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "Signal name recorded on the step.",
+              "type": "string"
+            },
+            "payload": {
+              "description": "Signal payload; JSON `null` when the event carried none."
+            },
+            "random": {
+              "description": "32 hex chars of journaled randomness; the reducer's only entropy.",
+              "type": "string"
+            },
+            "step_id": {
+              "description": "The step that was waiting.",
+              "type": "string"
+            },
+            "ts_ms": {
+              "description": "Event time in milliseconds since the Unix epoch; the reducer's clock.",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "const": "signal"
+            },
+            "usage_total": {
+              "description": "Banked usage for the run, including this event.",
+              "$ref": "#/$defs/Usage",
+              "default": {
+                "cost_micro_usd": 0,
+                "cpu_ms": 0,
+                "tokens": 0
+              }
+            }
+          },
+          "required": [
+            "type",
+            "ts_ms",
+            "random",
+            "step_id",
+            "name",
+            "payload"
+          ]
+        },
+        {
+          "description": "A timer fired.",
+          "type": "object",
+          "properties": {
+            "random": {
+              "description": "32 hex chars of journaled randomness; the reducer's only entropy.",
+              "type": "string"
+            },
+            "step_id": {
+              "description": "The timer step.",
+              "type": "string"
+            },
+            "ts_ms": {
+              "description": "Event time in milliseconds since the Unix epoch; the reducer's clock.",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "const": "timer"
+            },
+            "usage_total": {
+              "description": "Banked usage for the run, including this event.",
+              "$ref": "#/$defs/Usage",
+              "default": {
+                "cost_micro_usd": 0,
+                "cpu_ms": 0,
+                "tokens": 0
+              }
+            }
+          },
+          "required": [
+            "type",
+            "ts_ms",
+            "random",
+            "step_id"
+          ]
+        },
+        {
+          "description": "A child run reached a terminal status.",
+          "type": "object",
+          "properties": {
+            "child_run_id": {
+              "description": "The child run.",
+              "type": "string"
+            },
+            "output": {
+              "description": "Child output, when the event carried a payload."
+            },
+            "random": {
+              "description": "32 hex chars of journaled randomness; the reducer's only entropy.",
+              "type": "string"
+            },
+            "status": {
+              "description": "`succeeded`, `failed` or `cancelled`.",
+              "$ref": "#/$defs/Status"
+            },
+            "step_id": {
+              "description": "The parent's `spawn` step.",
+              "type": "string"
+            },
+            "ts_ms": {
+              "description": "Event time in milliseconds since the Unix epoch; the reducer's clock.",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "const": "child_done"
+            },
+            "usage_total": {
+              "description": "Banked usage for the run, including this event.",
+              "$ref": "#/$defs/Usage",
+              "default": {
+                "cost_micro_usd": 0,
+                "cpu_ms": 0,
+                "tokens": 0
+              }
+            }
+          },
+          "required": [
+            "type",
+            "ts_ms",
+            "random",
+            "step_id",
+            "child_run_id",
+            "status"
+          ]
+        }
+      ]
+    },
+    "Reduction": {
+      "description": "What the reducer returned: the new user state (byte-exact JSON) and its commands.",
+      "type": "object",
+      "properties": {
+        "commands": {
+          "description": "Commands in issue order.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Command"
+          }
+        },
+        "state": {
+          "description": "New user state, byte-exact JSON.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "state"
+      ]
+    },
+    "RefoldCheckInput": {
+      "description": "Input to `refold_check`.",
+      "type": "object",
+      "properties": {
+        "actual": {
+          "description": "Hashes the re-fold produced, ascending by seq.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HashAtSeq"
+          }
+        },
+        "expected": {
+          "description": "Hashes as journaled, ascending by seq.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HashAtSeq"
+          }
+        }
+      },
+      "required": [
+        "expected",
+        "actual"
+      ]
+    },
+    "RefoldCheckOutput": {
+      "description": "`matches: false` carries the first divergent seq and both hashes.",
+      "type": "object",
+      "properties": {
+        "actual": {
+          "description": "Re-folded hash at `seq`; empty when the re-fold produced none.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expected": {
+          "description": "Journaled hash at `seq`; empty when the journal has no entry there.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "matches": {
+          "description": "Whether every pair agreed.",
+          "type": "boolean"
+        },
+        "seq": {
+          "description": "The first divergent seq.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "matches"
+      ]
+    },
+    "RetryPlan": {
+      "description": "`retry: false` means the step fails for good; `next_attempt` / `delay_ms` are set iff `retry`.",
+      "type": "object",
+      "properties": {
+        "delay_ms": {
+          "description": "Delay before that attempt, in milliseconds.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "next_attempt": {
+          "description": "The attempt to schedule (`attempt + 1`).",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        },
+        "retry": {
+          "description": "Whether another attempt is scheduled.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "retry"
+      ]
+    },
+    "RetryPolicy": {
+      "description": "Declared per activity in the schema registry (see `docs/workflows.md`). Integers only\nso the policy can live inside the hashed `KernelState`.",
+      "type": "object",
+      "properties": {
+        "backoff": {
+          "description": "Backoff shape.",
+          "$ref": "#/$defs/Backoff"
+        },
+        "factor": {
+          "description": "Multiplier for exponential backoff, e.g. `2`.",
+          "type": "integer",
+          "format": "uint32",
+          "default": 2,
+          "minimum": 0
+        },
+        "initial_ms": {
+          "description": "Base delay in milliseconds. Default `1_000`.",
+          "type": "integer",
+          "format": "uint64",
+          "default": 1000,
+          "minimum": 0
+        },
+        "jitter": {
+          "description": "Jitter mode. Default `full`.",
+          "$ref": "#/$defs/Jitter",
+          "default": "full"
+        },
+        "max_attempts": {
+          "description": "Total attempts including the first. `1` means never retry.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "max_ms": {
+          "description": "Delay cap in milliseconds. Default `600_000`.",
+          "type": "integer",
+          "format": "uint64",
+          "default": 600000,
+          "minimum": 0
+        }
+      },
+      "required": [
+        "max_attempts",
+        "backoff"
+      ]
+    },
+    "RunPatch": {
+      "description": "The run-row columns a transition rewrites.",
+      "type": "object",
+      "properties": {
+        "last_seq": {
+          "description": "New `last_seq`: the seq of the last event in `Transition::events`.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "status": {
+          "description": "New run status.",
+          "$ref": "#/$defs/RunStatus"
+        }
+      },
+      "required": [
+        "status",
+        "last_seq"
+      ]
+    },
+    "RunRef": {
+      "description": "The run row as the host loaded it under the per-run lock.",
+      "type": "object",
+      "properties": {
+        "bundle_digest": {
+          "description": "Content digest of the workflow bundle the run is pinned to.",
+          "type": "string"
+        },
+        "last_seq": {
+          "description": "Seq of the last journaled event; `0` before `started`.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "parent_run_id": {
+          "description": "The parent run, when this run was spawned as a child.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "parent_step_id": {
+          "description": "The parent's `spawn` step, when this run was spawned as a child.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "run_id": {
+          "description": "Run identifier.",
+          "type": "string"
+        },
+        "status": {
+          "description": "Run-level status.",
+          "$ref": "#/$defs/RunStatus"
+        },
+        "workflow": {
+          "description": "Workflow name the run executes.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "workflow",
+        "bundle_digest",
+        "status",
+        "last_seq"
+      ]
+    },
+    "RunStatus": {
+      "description": "Run-level status (the `runs.status` column).",
+      "oneOf": [
+        {
+          "description": "Row exists, `started` not yet folded (child runs and continue-as-new go through the outbox).",
+          "type": "string",
+          "const": "created"
+        },
+        {
+          "description": "`started` folded; steps may be open.",
+          "type": "string",
+          "const": "running"
+        },
+        {
+          "description": "Every open step is a signal wait: nothing progresses until a signal arrives.",
+          "type": "string",
+          "const": "awaiting_signal"
+        },
+        {
+          "description": "Terminal: the reducer issued `complete`.",
+          "type": "string",
+          "const": "completed"
+        },
+        {
+          "description": "Terminal: the reducer threw, nondeterminism was detected, or the host failed the run.",
+          "type": "string",
+          "const": "failed"
+        },
+        {
+          "description": "Terminal: the user cancelled the run.",
+          "type": "string",
+          "const": "cancelled"
+        },
+        {
+          "description": "Terminal: the reducer issued `continue_as_new`; a successor run carries on.",
+          "type": "string",
+          "const": "continued"
+        }
+      ]
+    },
+    "SignalWait": {
+      "description": "An open `await_signal` step the host registers so a matching signal can be delivered.",
+      "type": "object",
+      "properties": {
+        "expires_at_ms": {
+          "description": "Absolute expiry in milliseconds since the Unix epoch; `None` waits forever.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "name": {
+          "description": "Signal name.",
+          "type": "string"
+        },
+        "schema_ref": {
+          "description": "Payload schema reference, when the reducer named one.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "step_id": {
+          "description": "The step that is waiting.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "step_id",
+        "name"
+      ]
+    },
+    "StateHashInput": {
+      "description": "Input to `compute_state_hash`.",
+      "type": "object",
+      "properties": {
+        "kernel_state": {
+          "description": "Kernel state to hash.",
+          "$ref": "#/$defs/KernelState"
+        },
+        "state": {
+          "description": "User state, byte-exact JSON.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kernel_state",
+        "state"
+      ]
+    },
+    "StateHashOutput": {
+      "description": "Output of `compute_state_hash`.",
+      "type": "object",
+      "properties": {
+        "hash": {
+          "description": "Lowercase hex sha256 (see `docs/kernel-protocol.md`).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hash"
+      ]
+    },
+    "Status": {
+      "description": "The seven step statuses (see `docs/kernel-protocol.md`).",
+      "oneOf": [
+        {
+          "description": "Opened, not yet accepted by a worker (timers, children and markers start here too).",
+          "type": "string",
+          "const": "scheduled"
+        },
+        {
+          "description": "A worker accepted the task.",
+          "type": "string",
+          "const": "running"
+        },
+        {
+          "description": "Terminal: the step produced a result.",
+          "type": "string",
+          "const": "succeeded"
+        },
+        {
+          "description": "Terminal: non-retryable cause, attempts exhausted, or `schema_violation`.",
+          "type": "string",
+          "const": "failed"
+        },
+        {
+          "description": "A retry was planned; the step returns to `scheduled` for the next attempt.",
+          "type": "string",
+          "const": "retrying"
+        },
+        {
+          "description": "Terminal: cancelled by the run or by the user.",
+          "type": "string",
+          "const": "cancelled"
+        },
+        {
+          "description": "Parked until a signal is delivered.",
+          "type": "string",
+          "const": "awaiting_signal"
+        }
+      ]
+    },
+    "StepState": {
+      "description": "Kernel bookkeeping for one open step.",
+      "type": "object",
+      "properties": {
+        "activity": {
+          "description": "Activity name (tasks only).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "attempt": {
+          "description": "Current attempt (1-based for tasks, `0` for every other kind).",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "child_run_id": {
+          "description": "Child run id (children only).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fire_at_ms": {
+          "description": "Fire time in milliseconds since the Unix epoch (timers only).",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "kind": {
+          "description": "Step kind.",
+          "$ref": "#/$defs/Kind"
+        },
+        "queue": {
+          "description": "Queue name (tasks only).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "retry": {
+          "description": "Retry policy (tasks only).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RetryPolicy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "signal": {
+          "description": "Signal name (signal waits only).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "description": "Current step status.",
+          "$ref": "#/$defs/Status"
+        }
+      },
+      "required": [
+        "kind",
+        "status",
+        "attempt"
+      ]
+    },
+    "TaskUpdate": {
+      "description": "A status change on an existing task row.",
+      "type": "object",
+      "properties": {
+        "attempt": {
+          "description": "The attempt the update applies to.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "not_before_ms": {
+          "description": "For `retrying → scheduled`: the earliest dispatch time.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "status": {
+          "description": "New task status.",
+          "$ref": "#/$defs/Status"
+        },
+        "task_id": {
+          "description": "`<run_id>:<step_id>`.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id",
+        "attempt",
+        "status"
+      ]
+    },
+    "Transition": {
+      "description": "The write-set. Journals apply it atomically under the run lock and never interpret\ncommands themselves (see `docs/journal.md`).",
+      "type": "object",
+      "properties": {
+        "completion": {
+          "description": "Set when the run ended in this transition.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Completion"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "continue_as_new": {
+          "description": "Set when the run continues as a successor run.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ContinueAsNew"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "emits": {
+          "description": "Side-channel emissions to publish.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Emit"
+          }
+        },
+        "events": {
+          "description": "Trigger event first, then lifecycle `scheduled` events for each new task/timer/spawn/wait.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Envelope"
+          }
+        },
+        "kernel_state": {
+          "description": "Kernel state after the transition.",
+          "$ref": "#/$defs/KernelState"
+        },
+        "run": {
+          "description": "Run-row patch.",
+          "$ref": "#/$defs/RunPatch"
+        },
+        "signal_waits": {
+          "description": "Signal waits to register.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SignalWait"
+          }
+        },
+        "spawns": {
+          "description": "Child runs to create.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/NewSpawn"
+          }
+        },
+        "state": {
+          "description": "User state, byte-exact JSON. Stored inline when `state_inline`, else offloaded.",
+          "type": "string"
+        },
+        "state_hash": {
+          "description": "Hash of `(kernel_state, state)` (see `docs/kernel-protocol.md`).",
+          "type": "string"
+        },
+        "state_inline": {
+          "description": "Whether `state` fits the inline limit (`INLINE_LIMIT_BYTES`).",
+          "type": "boolean"
+        },
+        "task_updates": {
+          "description": "Status changes to existing task rows.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/TaskUpdate"
+          }
+        },
+        "tasks": {
+          "description": "Task rows to insert.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/NewTask"
+          }
+        },
+        "timers": {
+          "description": "Timer rows to insert.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/NewTimer"
+          }
+        }
+      },
+      "required": [
+        "run",
+        "kernel_state",
+        "state",
+        "state_hash",
+        "state_inline",
+        "events"
+      ]
+    },
+    "Usage": {
+      "description": "Resource usage stamped on events and summed into `KernelState`. Integers only,\nbecause `KernelState` is hashed.",
+      "type": "object",
+      "properties": {
+        "cost_micro_usd": {
+          "description": "Cost in micro-USD (1 USD = 1_000_000). Integer so the hash stays float-free.",
+          "type": "integer",
+          "format": "uint64",
+          "default": 0,
+          "minimum": 0
+        },
+        "cpu_ms": {
+          "description": "CPU time consumed, in milliseconds.",
+          "type": "integer",
+          "format": "uint64",
+          "default": 0,
+          "minimum": 0
+        },
+        "tokens": {
+          "description": "Model tokens consumed.",
+          "type": "integer",
+          "format": "uint64",
+          "default": 0,
+          "minimum": 0
+        }
+      }
+    },
+    "ValidateEventOutput": {
+      "description": "Output of `validate_event`.",
+      "type": "object",
+      "properties": {
+        "normalized": {
+          "description": "The event after validation; currently a byte-exact copy of the input.",
+          "$ref": "#/$defs/EventInput"
+        }
+      },
+      "required": [
+        "normalized"
+      ]
+    }
+  }
+}

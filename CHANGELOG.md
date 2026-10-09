@@ -1,0 +1,86 @@
+# Changelog
+
+All notable changes to Vlo are recorded here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
+[Semantic Versioning](https://semver.org/). Packages `@vlo/sdk`, `@vlo/agent` and the
+`vlo-*` crates share one version.
+
+## [Unreleased]
+
+### Added
+
+- Kernel: pure event-sourced state machine in Rust, compiled to wasm; five reducer events,
+  seven commands, closed envelope of five kinds and seven statuses; write-set `Transition`;
+  state hash on every checkpoint and a rebuild-from-seq-0 refold check; retry planning
+  with backoff and jitter; JSON Schema for the protocol; golden fixtures.
+- Journal adapters: Postgres (session-free, works behind transaction-mode poolers) and
+  SQLite (`node:sqlite`). The journal is also the task queue: outbox, leases, timeouts,
+  timers, signal waits.
+- Host: roles `orchestrator`, `api`, `worker:<queue>`; dispatcher in `loop` or `manual`
+  mode with `tick()` and `drain()`; HTTP push transport with HMAC signatures; pull mode;
+  in-process transport; lease and timeout reapers; parent notification for child runs.
+- HTTP API: runs, events, SSE stream, signals, signed signal links with a confirmation
+  form, task poll and completion, `/healthz`, tick route.
+- Authoring: `activity()` with Zod schemas, `signal()`, `defineWorkflow`, `cmd.*`,
+  `sequence`, `step`, `fanOut`, `waitFor`, `sleep`, `cmd.awaitHuman`, `defineWorker`,
+  `createClient`, `defineConfig` and `env()`.
+- `@vlo/agent`: `decision()`, `agentLoop()` with a budget that parks the run on a top-up
+  signal instead of failing it, `budgetTopup()`.
+- CLI: `vlo dev`, `vlo serve`, `vlo doctor`, `vlo deploy` (Cloud Run and Vercel
+  templates), `--help`, `--version`.
+- Blob stores: file and Google Cloud Storage, with payload offload.
+- Documentation: `docs/`, examples, TypeDoc and `cargo doc` gates.
+- `continue_as_new` starts the successor run in the same transaction; runs link through
+  `continued_from` / `continued_to` (migration `0003_continued_to`, both on `RunView`).
+- `await_signal` with `timeoutMs` opens a kernel-managed deadline timer `<id>:timeout`; the
+  loser of the race is cancelled by the kernel and a late signal answers `delivered: false`.
+- `resultOf`, `fanOutResultsOf`, `signalOf`: typed reads of `sequence` state.
+- `vlo dev` honours `VLO_PROFILE`, then `local`, then the only profile in the file; relative
+  `sqlite://` and `file://` paths in a profile resolve against the config file's directory.
+- `sequence`: `fanOutRuns(workflow, select, { concurrency, onFailure })` fans out child
+  runs with `${workflow}#${index}` step ids and stores a `ChildResult` per item
+  (`fanOutRunsResultsOf`); `step(…, { id, when, onFailure })` pins a step id, gates a
+  phase and tolerates a failed task; `fanOut(…, { onFailure })` tolerates a failed item;
+  `sequence(steps, { output })` shapes the completion output; `SeqState.usage` tracks the
+  run's banked usage on every event. A `child_done` for a `sequence` run is handled (it
+  used to fail the run as "no handler").
+- `RunView.error` and `RunView.cause` on a `failed` run: the closing marker's text and
+  cause, read lazily from the journal, so `GET /v1/runs/{id}`, the SSE `end` frame and
+  `client.waitFor` all say why a run failed.
+- `TaskContext.runId`.
+- `withRetryInput(handler, shape)`: attempts after the first see `shape(input, attempt)`;
+  the journaled input and replay are unchanged.
+- `client.find(runId)` (`null` on 404) and `client.startFresh(workflow, input, { runId,
+  search, maxChain })`, which walks `runId`, `${runId}_2`, … past ended runs and joins a
+  live one; `isTerminalRunStatus` / `TERMINAL_RUN_STATUSES`.
+- `defineDomain({ name, workflows, workers, activities, signals })` and
+  `createHost({ domains })`; `workflows` is optional when a domain supplies them.
+
+### Changed
+
+- Postgres journal: `migrate()` skips `CREATE SCHEMA` when the schema already exists, so a
+  DBA-provisioned schema works for a role without `CREATE` on the database; `vlo doctor`
+  explains that privilege when the boot fails on it.
+- `node:sqlite` is loaded only when a SQLite journal is opened, so a Postgres host no
+  longer prints Node's SQLite `ExperimentalWarning` on import.
+- Size gate: the 256 KB runtime budget now measures the chunks a host imports (`index.js` +
+  `host.js`); the CLI has its own 96 KB budget and may never be reachable from the runtime.
+- **Breaking:** activity and signal content hashes now cover a *projection* of the JSON
+  Schema (annotation keywords such as `description`, `default`, `title` and `$schema`
+  removed) plus a `v: 1` version tag, so labels and defaults no longer re-version a
+  definition. Every `schema_ref` changes once; in-flight runs are unaffected because hosts
+  resolve definitions by name. The rule is pinned by `fixtures/schema-hash/` and documented
+  in `docs/kernel-protocol.md#schema-hash`. Exports `projectSchema`, `SCHEMA_HASH_VERSION`,
+  `ANNOTATION_KEYWORDS`, `NAMED_SCHEMA_MAPS`.
+- Error codes: kernel `run_terminal` → `run_closed`; host `Nondeterminism` → `refold_mismatch`;
+  host `ReducerFailed` → `reducer_failed`. The `Cause` values and marker ids are unchanged.
+- `cmd.awaitHuman` no longer emits its own `timer`; `humanTimeoutStepId` is a deprecated
+  alias of `signalTimeoutStepId`.
+- The `fail` marker's `error` is now the reducer's own message; the ` [while folding …]`
+  context moved off it (the folded event is already the marker's payload). `ReducerFailed`
+  gains `reason`.
+- `sequence` state gains `usage` on every fold. Existing checkpoints are unaffected: the
+  host rebuilds only when a checkpoint is missing or its digest differs, and a stale
+  field is simply absent until the next event.
+
+[Unreleased]: https://github.com/oona/orbi/tree/main/packages/vlo

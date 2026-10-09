@@ -1,0 +1,207 @@
+{
+  "export": "reduce_step",
+  "input": {
+    "event": {
+      "attempt": 0,
+      "kind": "marker",
+      "payload": "{\"n\":2}",
+      "random": "9f86d081884c7d659a2feaa0c55ad015",
+      "run_id": "run_fixture",
+      "status": "succeeded",
+      "step_id": "start",
+      "ts_ms": 1700000000000
+    },
+    "kernel_state": {
+      "closed_steps": 0,
+      "status": "running",
+      "step_no": 0,
+      "steps": {},
+      "usage_total": {
+        "cost_micro_usd": 0,
+        "cpu_ms": 0,
+        "tokens": 0
+      },
+      "v": 1
+    },
+    "reduction": {
+      "commands": [
+        {
+          "fire_in_ms": 60000,
+          "type": "timer"
+        },
+        {
+          "input": {
+            "k": 1
+          },
+          "type": "spawn",
+          "workflow": "child-flow"
+        },
+        {
+          "name": "approve",
+          "timeout_ms": 3600000,
+          "type": "await_signal"
+        },
+        {
+          "channel": "progress",
+          "data": {
+            "pct": 10
+          },
+          "type": "emit"
+        }
+      ],
+      "state": "{\"phase\":\"park\"}"
+    },
+    "run": {
+      "bundle_digest": "sha256:bundle",
+      "last_seq": 0,
+      "run_id": "run_fixture",
+      "status": "created",
+      "workflow": "example"
+    }
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "emits": [
+        {
+          "channel": "progress",
+          "data": {
+            "pct": 10
+          }
+        }
+      ],
+      "events": [
+        {
+          "attempt": 0,
+          "kind": "marker",
+          "payload": "{\"n\":2}",
+          "random": "9f86d081884c7d659a2feaa0c55ad015",
+          "run_id": "run_fixture",
+          "seq": 1,
+          "state_hash": "22bd0aa32a229cc0b275a2db00c86db3aa6bd6279ee19fb56a1a40db4515bc4d",
+          "status": "succeeded",
+          "step_id": "start",
+          "ts_ms": 1700000000000
+        },
+        {
+          "attempt": 0,
+          "kind": "timer",
+          "random": "9f86d081884c7d659a2feaa0c55ad015",
+          "run_id": "run_fixture",
+          "seq": 2,
+          "state_hash": "22bd0aa32a229cc0b275a2db00c86db3aa6bd6279ee19fb56a1a40db4515bc4d",
+          "status": "scheduled",
+          "step_id": "timer#1",
+          "ts_ms": 1700000000000
+        },
+        {
+          "attempt": 0,
+          "kind": "child",
+          "payload": "{\"k\":1}",
+          "random": "9f86d081884c7d659a2feaa0c55ad015",
+          "run_id": "run_fixture",
+          "seq": 3,
+          "state_hash": "22bd0aa32a229cc0b275a2db00c86db3aa6bd6279ee19fb56a1a40db4515bc4d",
+          "status": "scheduled",
+          "step_id": "child#2",
+          "ts_ms": 1700000000000
+        },
+        {
+          "attempt": 0,
+          "kind": "signal",
+          "random": "9f86d081884c7d659a2feaa0c55ad015",
+          "run_id": "run_fixture",
+          "seq": 4,
+          "state_hash": "22bd0aa32a229cc0b275a2db00c86db3aa6bd6279ee19fb56a1a40db4515bc4d",
+          "status": "awaiting_signal",
+          "step_id": "signal#3",
+          "ts_ms": 1700000000000
+        },
+        {
+          "attempt": 0,
+          "kind": "timer",
+          "random": "9f86d081884c7d659a2feaa0c55ad015",
+          "run_id": "run_fixture",
+          "seq": 5,
+          "state_hash": "22bd0aa32a229cc0b275a2db00c86db3aa6bd6279ee19fb56a1a40db4515bc4d",
+          "status": "scheduled",
+          "step_id": "signal#3:timeout",
+          "ts_ms": 1700000000000
+        }
+      ],
+      "kernel_state": {
+        "closed_steps": 0,
+        "status": "running",
+        "step_no": 4,
+        "steps": {
+          "child#2": {
+            "attempt": 0,
+            "child_run_id": "run_f1ff31ad075b31707059625743",
+            "kind": "child",
+            "status": "scheduled"
+          },
+          "signal#3": {
+            "attempt": 0,
+            "kind": "signal",
+            "signal": "approve",
+            "status": "awaiting_signal"
+          },
+          "signal#3:timeout": {
+            "attempt": 0,
+            "fire_at_ms": 1700003600000,
+            "kind": "timer",
+            "status": "scheduled"
+          },
+          "timer#1": {
+            "attempt": 0,
+            "fire_at_ms": 1700000060000,
+            "kind": "timer",
+            "status": "scheduled"
+          }
+        },
+        "usage_total": {
+          "cost_micro_usd": 0,
+          "cpu_ms": 0,
+          "tokens": 0
+        },
+        "v": 1
+      },
+      "run": {
+        "last_seq": 5,
+        "status": "running"
+      },
+      "signal_waits": [
+        {
+          "expires_at_ms": 1700003600000,
+          "name": "approve",
+          "step_id": "signal#3"
+        }
+      ],
+      "spawns": [
+        {
+          "child_run_id": "run_f1ff31ad075b31707059625743",
+          "input": {
+            "k": 1
+          },
+          "step_id": "child#2",
+          "workflow": "child-flow"
+        }
+      ],
+      "state": "{\"phase\":\"park\"}",
+      "state_hash": "22bd0aa32a229cc0b275a2db00c86db3aa6bd6279ee19fb56a1a40db4515bc4d",
+      "state_inline": true,
+      "task_updates": [],
+      "tasks": [],
+      "timers": [
+        {
+          "fire_at_ms": 1700000060000,
+          "step_id": "timer#1"
+        },
+        {
+          "fire_at_ms": 1700003600000,
+          "step_id": "signal#3:timeout"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "export": "prepare_event",
+  "input": "not an object",
+  "output": {
+    "error": {
+      "code": "malformed_json",
+      "message": "invalid type: string \"not an object\", expected struct PrepareEventInput at line 1 column 15"
+    },
+    "ok": false
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    // The workspace siblings resolve to their unbuilt `dist/` in a fresh checkout. Point the
+    // bare specifiers at their sources so `tsc` and `tsx` both work with no build step.
+    "paths": {
+      "@vlo/sdk": ["../sdk/ts/sdk/src/index.ts"],
+      "@vlo/sdk/host": ["../sdk/ts/sdk/src/host.ts"],
+      "@vlo/agent": ["../sdk/ts/agent/src/index.ts"]
+    }
+  },
+  "include": ["hello/**/*", "pipeline/**/*", "agent/**/*"]
+}

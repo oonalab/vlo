@@ -1,0 +1,25 @@
+[package]
+name = "vlo-kernel-wasm"
+description = "wasm-bindgen exports for the Vlo kernel. JSON string in, JSON string out."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+vlo-kernel = { path = "../kernel" }
+wasm-bindgen = { workspace = true }
+
+# The release profile already does the size work (opt-level "z", fat LTO, strip) and the
+# result is ~290 KB against a 1 MiB budget. Skipping wasm-opt removes an external
+# binaryen dependency whose version would otherwise decide the committed bytes — the
+# committed artifact must be reproducible from the pinned Rust toolchain alone.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false

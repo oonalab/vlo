@@ -1,0 +1,159 @@
+{
+  "export": "reduce_step",
+  "input": {
+    "event": {
+      "attempt": 1,
+      "kind": "task",
+      "payload": "{\"ok\":true}",
+      "random": "9f86d081884c7d659a2feaa0c55ad015",
+      "run_id": "run_fixture",
+      "status": "succeeded",
+      "step_id": "task#1",
+      "ts_ms": 1700000000000,
+      "usage": {
+        "cost_micro_usd": 45,
+        "cpu_ms": 12,
+        "tokens": 300
+      }
+    },
+    "kernel_state": {
+      "closed_steps": 0,
+      "status": "running",
+      "step_no": 2,
+      "steps": {
+        "task#1": {
+          "activity": "plan",
+          "attempt": 1,
+          "kind": "task",
+          "queue": "default",
+          "retry": {
+            "backoff": "exponential",
+            "factor": 2,
+            "initial_ms": 1000,
+            "jitter": "full",
+            "max_attempts": 3,
+            "max_ms": 600000
+          },
+          "status": "running"
+        },
+        "task#2": {
+          "activity": "plan",
+          "attempt": 1,
+          "kind": "task",
+          "queue": "default",
+          "retry": {
+            "backoff": "exponential",
+            "factor": 2,
+            "initial_ms": 1000,
+            "jitter": "full",
+            "max_attempts": 3,
+            "max_ms": 600000
+          },
+          "status": "scheduled"
+        }
+      },
+      "usage_total": {
+        "cost_micro_usd": 0,
+        "cpu_ms": 0,
+        "tokens": 0
+      },
+      "v": 1
+    },
+    "reduction": {
+      "commands": [
+        {
+          "output": {
+            "total": 2
+          },
+          "type": "complete"
+        }
+      ],
+      "state": "{\"phase\":\"done\"}"
+    },
+    "run": {
+      "bundle_digest": "sha256:bundle",
+      "last_seq": 4,
+      "run_id": "run_fixture",
+      "status": "running",
+      "workflow": "example"
+    }
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "completion": {
+        "output": {
+          "total": 2
+        },
+        "status": "completed"
+      },
+      "emits": [],
+      "events": [
+        {
+          "attempt": 1,
+          "kind": "task",
+          "payload": "{\"ok\":true}",
+          "random": "9f86d081884c7d659a2feaa0c55ad015",
+          "run_id": "run_fixture",
+          "seq": 5,
+          "state_hash": "d59440b6a65637358b6d6dee0521b69914db0becafe1bf85b0d0fc1cf5a61789",
+          "status": "succeeded",
+          "step_id": "task#1",
+          "ts_ms": 1700000000000,
+          "usage": {
+            "cost_micro_usd": 45,
+            "cpu_ms": 12,
+            "tokens": 300
+          }
+        },
+        {
+          "attempt": 0,
+          "kind": "marker",
+          "payload": "{\"total\":2}",
+          "random": "9f86d081884c7d659a2feaa0c55ad015",
+          "run_id": "run_fixture",
+          "seq": 6,
+          "state_hash": "d59440b6a65637358b6d6dee0521b69914db0becafe1bf85b0d0fc1cf5a61789",
+          "status": "succeeded",
+          "step_id": "complete",
+          "ts_ms": 1700000000000
+        }
+      ],
+      "kernel_state": {
+        "closed_steps": 2,
+        "status": "completed",
+        "step_no": 2,
+        "steps": {},
+        "usage_total": {
+          "cost_micro_usd": 45,
+          "cpu_ms": 12,
+          "tokens": 300
+        },
+        "v": 1
+      },
+      "run": {
+        "last_seq": 6,
+        "status": "completed"
+      },
+      "signal_waits": [],
+      "spawns": [],
+      "state": "{\"phase\":\"done\"}",
+      "state_hash": "d59440b6a65637358b6d6dee0521b69914db0becafe1bf85b0d0fc1cf5a61789",
+      "state_inline": true,
+      "task_updates": [
+        {
+          "attempt": 1,
+          "status": "succeeded",
+          "task_id": "run_fixture:task#1"
+        },
+        {
+          "attempt": 1,
+          "status": "cancelled",
+          "task_id": "run_fixture:task#2"
+        }
+      ],
+      "tasks": [],
+      "timers": []
+    }
+  }
+}

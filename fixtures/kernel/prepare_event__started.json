@@ -1,0 +1,56 @@
+{
+  "export": "prepare_event",
+  "input": {
+    "event": {
+      "attempt": 0,
+      "kind": "marker",
+      "payload": "{\"n\":3}",
+      "random": "9f86d081884c7d659a2feaa0c55ad015",
+      "run_id": "run_fixture",
+      "status": "succeeded",
+      "step_id": "start",
+      "ts_ms": 1700000000000
+    },
+    "run": {
+      "bundle_digest": "sha256:bundle",
+      "last_seq": 0,
+      "run_id": "run_fixture",
+      "status": "created",
+      "workflow": "example"
+    }
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "init_input": {
+        "n": 3
+      },
+      "kernel_state": {
+        "closed_steps": 0,
+        "status": "running",
+        "step_no": 0,
+        "steps": {},
+        "usage_total": {
+          "cost_micro_usd": 0,
+          "cpu_ms": 0,
+          "tokens": 0
+        },
+        "v": 1
+      },
+      "mode": "reduce",
+      "reducer_event": {
+        "input": {
+          "n": 3
+        },
+        "random": "9f86d081884c7d659a2feaa0c55ad015",
+        "ts_ms": 1700000000000,
+        "type": "started",
+        "usage_total": {
+          "cost_micro_usd": 0,
+          "cpu_ms": 0,
+          "tokens": 0
+        }
+      }
+    }
+  }
+}

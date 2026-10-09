@@ -1,0 +1,21 @@
+{
+  "kind": "signal",
+  "name": "example.nudge",
+  "cases": [
+    {
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    }
+  ],
+  "projected": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "hash": "8fc7f46093b8ec01",
+  "schema_ref": "example.nudge@8fc7f46093b8ec01"
+}

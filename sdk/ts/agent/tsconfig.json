@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    // `@vlo/sdk` resolves to its unbuilt `dist/` in a fresh checkout. Typecheck against the
+    // sibling's sources instead; imports stay bare, so the published package is unaffected.
+    "paths": {
+      "@vlo/sdk": ["../sdk/src/index.ts"],
+      "@vlo/sdk/host": ["../sdk/src/host.ts"]
+    }
+  },
+  "include": ["src/**/*", "test/**/*"]
+}

@@ -1,0 +1,66 @@
+{
+  "kind": "signal",
+  "name": "example.approve",
+  "cases": [
+    {
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": {
+          "who": {
+            "type": "object",
+            "title": "Who",
+            "properties": {
+              "by": {
+                "type": "string",
+                "description": "approver"
+              }
+            },
+            "required": [
+              "by"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "$ref": "#/$defs/who"
+      }
+    },
+    {
+      "schema": {
+        "$defs": {
+          "who": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "$ref": "#/$defs/who"
+      }
+    }
+  ],
+  "projected": {
+    "$defs": {
+      "who": {
+        "type": "object",
+        "properties": {
+          "by": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "by"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$ref": "#/$defs/who"
+  },
+  "hash": "f6d37ddd7a07ce1f",
+  "schema_ref": "example.approve@f6d37ddd7a07ce1f"
+}

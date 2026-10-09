@@ -1,0 +1,42 @@
+{
+  "export": "prepare_event",
+  "input": {
+    "event": {
+      "attempt": 1,
+      "kind": "task",
+      "random": "9f86d081884c7d659a2feaa0c55ad015",
+      "run_id": "run_fixture",
+      "status": "succeeded",
+      "step_id": "task#9",
+      "ts_ms": 1700000000000
+    },
+    "kernel_state": {
+      "closed_steps": 0,
+      "status": "running",
+      "step_no": 1,
+      "steps": {},
+      "usage_total": {
+        "cost_micro_usd": 0,
+        "cpu_ms": 0,
+        "tokens": 0
+      },
+      "v": 1
+    },
+    "run": {
+      "bundle_digest": "sha256:bundle",
+      "last_seq": 2,
+      "run_id": "run_fixture",
+      "status": "running",
+      "workflow": "example"
+    },
+    "state": "null"
+  },
+  "output": {
+    "error": {
+      "code": "unknown_step",
+      "message": "no open step with this id",
+      "step_id": "task#9"
+    },
+    "ok": false
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "export": "plan_retry",
+  "input": {
+    "attempt": 1,
+    "cause": "timeout",
+    "policy": {
+      "backoff": "exponential",
+      "factor": 2,
+      "initial_ms": 1000,
+      "jitter": "full",
+      "max_attempts": 3,
+      "max_ms": 600000
+    },
+    "random": "short"
+  },
+  "output": {
+    "error": {
+      "code": "invalid_event",
+      "message": "random must be 32 lowercase hex chars"
+    },
+    "ok": false
+  }
+}

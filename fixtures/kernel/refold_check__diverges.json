@@ -1,0 +1,34 @@
+{
+  "export": "refold_check",
+  "input": {
+    "actual": [
+      {
+        "hash": "a",
+        "seq": 1
+      },
+      {
+        "hash": "z",
+        "seq": 2
+      }
+    ],
+    "expected": [
+      {
+        "hash": "a",
+        "seq": 1
+      },
+      {
+        "hash": "b",
+        "seq": 2
+      }
+    ]
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "actual": "z",
+      "expected": "b",
+      "matches": false,
+      "seq": 2
+    }
+  }
+}

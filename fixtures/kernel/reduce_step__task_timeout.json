@@ -1,0 +1,142 @@
+{
+  "export": "reduce_step",
+  "input": {
+    "event": {
+      "attempt": 0,
+      "kind": "marker",
+      "payload": "{\"n\":2}",
+      "random": "9f86d081884c7d659a2feaa0c55ad015",
+      "run_id": "run_fixture",
+      "status": "succeeded",
+      "step_id": "start",
+      "ts_ms": 1700000000000
+    },
+    "kernel_state": {
+      "closed_steps": 0,
+      "status": "running",
+      "step_no": 0,
+      "steps": {},
+      "usage_total": {
+        "cost_micro_usd": 0,
+        "cpu_ms": 0,
+        "tokens": 0
+      },
+      "v": 1
+    },
+    "reduction": {
+      "commands": [
+        {
+          "activity": "plan",
+          "id": "slow",
+          "input": {
+            "a": 1
+          },
+          "timeout_ms": 30000,
+          "type": "task"
+        }
+      ],
+      "state": "{\"phase\":\"work\"}"
+    },
+    "run": {
+      "bundle_digest": "sha256:bundle",
+      "last_seq": 0,
+      "run_id": "run_fixture",
+      "status": "created",
+      "workflow": "example"
+    }
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "emits": [],
+      "events": [
+        {
+          "attempt": 0,
+          "kind": "marker",
+          "payload": "{\"n\":2}",
+          "random": "9f86d081884c7d659a2feaa0c55ad015",
+          "run_id": "run_fixture",
+          "seq": 1,
+          "state_hash": "a4a8998c05c00be441b56f14cfe487baae8100068dd0f8d9008fd3e5c348a049",
+          "status": "succeeded",
+          "step_id": "start",
+          "ts_ms": 1700000000000
+        },
+        {
+          "attempt": 1,
+          "kind": "task",
+          "payload": "{\"a\":1}",
+          "random": "9f86d081884c7d659a2feaa0c55ad015",
+          "run_id": "run_fixture",
+          "seq": 2,
+          "state_hash": "a4a8998c05c00be441b56f14cfe487baae8100068dd0f8d9008fd3e5c348a049",
+          "status": "scheduled",
+          "step_id": "slow",
+          "ts_ms": 1700000000000
+        }
+      ],
+      "kernel_state": {
+        "closed_steps": 0,
+        "status": "running",
+        "step_no": 1,
+        "steps": {
+          "slow": {
+            "activity": "plan",
+            "attempt": 1,
+            "kind": "task",
+            "queue": "default",
+            "retry": {
+              "backoff": "exponential",
+              "factor": 2,
+              "initial_ms": 1000,
+              "jitter": "full",
+              "max_attempts": 3,
+              "max_ms": 600000
+            },
+            "status": "scheduled"
+          }
+        },
+        "usage_total": {
+          "cost_micro_usd": 0,
+          "cpu_ms": 0,
+          "tokens": 0
+        },
+        "v": 1
+      },
+      "run": {
+        "last_seq": 2,
+        "status": "running"
+      },
+      "signal_waits": [],
+      "spawns": [],
+      "state": "{\"phase\":\"work\"}",
+      "state_hash": "a4a8998c05c00be441b56f14cfe487baae8100068dd0f8d9008fd3e5c348a049",
+      "state_inline": true,
+      "task_updates": [],
+      "tasks": [
+        {
+          "activity": "plan",
+          "attempt": 1,
+          "idempotency_key": "run_fixture:slow:1",
+          "input": {
+            "a": 1
+          },
+          "lease_ttl_ms": 60000,
+          "queue": "default",
+          "retry": {
+            "backoff": "exponential",
+            "factor": 2,
+            "initial_ms": 1000,
+            "jitter": "full",
+            "max_attempts": 3,
+            "max_ms": 600000
+          },
+          "step_id": "slow",
+          "task_id": "run_fixture:slow",
+          "timeout_ms": 30000
+        }
+      ],
+      "timers": []
+    }
+  }
+}

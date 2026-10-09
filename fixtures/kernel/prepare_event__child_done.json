@@ -1,0 +1,83 @@
+{
+  "export": "prepare_event",
+  "input": {
+    "event": {
+      "attempt": 0,
+      "kind": "child",
+      "payload": "{\"sum\":9}",
+      "random": "9f86d081884c7d659a2feaa0c55ad015",
+      "run_id": "run_fixture",
+      "status": "succeeded",
+      "step_id": "child#1",
+      "ts_ms": 1700000000000
+    },
+    "kernel_state": {
+      "closed_steps": 0,
+      "status": "running",
+      "step_no": 1,
+      "steps": {
+        "child#1": {
+          "attempt": 0,
+          "child_run_id": "run_child",
+          "kind": "child",
+          "status": "scheduled"
+        }
+      },
+      "usage_total": {
+        "cost_micro_usd": 0,
+        "cpu_ms": 0,
+        "tokens": 0
+      },
+      "v": 1
+    },
+    "run": {
+      "bundle_digest": "sha256:bundle",
+      "last_seq": 3,
+      "run_id": "run_fixture",
+      "status": "running",
+      "workflow": "example"
+    },
+    "state": "null"
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "kernel_state": {
+        "closed_steps": 0,
+        "status": "running",
+        "step_no": 1,
+        "steps": {
+          "child#1": {
+            "attempt": 0,
+            "child_run_id": "run_child",
+            "kind": "child",
+            "status": "scheduled"
+          }
+        },
+        "usage_total": {
+          "cost_micro_usd": 0,
+          "cpu_ms": 0,
+          "tokens": 0
+        },
+        "v": 1
+      },
+      "mode": "reduce",
+      "reducer_event": {
+        "child_run_id": "run_child",
+        "output": {
+          "sum": 9
+        },
+        "random": "9f86d081884c7d659a2feaa0c55ad015",
+        "status": "succeeded",
+        "step_id": "child#1",
+        "ts_ms": 1700000000000,
+        "type": "child_done",
+        "usage_total": {
+          "cost_micro_usd": 0,
+          "cpu_ms": 0,
+          "tokens": 0
+        }
+      }
+    }
+  }
+}

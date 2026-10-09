@@ -1,0 +1,104 @@
+{
+  "export": "prepare_event",
+  "input": {
+    "event": {
+      "attempt": 0,
+      "cause": "nondeterminism_detected",
+      "kind": "marker",
+      "random": "9f86d081884c7d659a2feaa0c55ad015",
+      "run_id": "run_fixture",
+      "status": "failed",
+      "step_id": "nondeterminism",
+      "ts_ms": 1700000000000
+    },
+    "kernel_state": {
+      "closed_steps": 0,
+      "status": "running",
+      "step_no": 1,
+      "steps": {
+        "task#1": {
+          "activity": "plan",
+          "attempt": 1,
+          "kind": "task",
+          "queue": "default",
+          "retry": {
+            "backoff": "exponential",
+            "factor": 2,
+            "initial_ms": 1000,
+            "jitter": "full",
+            "max_attempts": 3,
+            "max_ms": 600000
+          },
+          "status": "running"
+        }
+      },
+      "usage_total": {
+        "cost_micro_usd": 0,
+        "cpu_ms": 0,
+        "tokens": 0
+      },
+      "v": 1
+    },
+    "run": {
+      "bundle_digest": "sha256:bundle",
+      "last_seq": 5,
+      "run_id": "run_fixture",
+      "status": "running",
+      "workflow": "example"
+    },
+    "state": "{\"phase\":\"work\"}"
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "mode": "lifecycle",
+      "transition": {
+        "emits": [],
+        "events": [
+          {
+            "attempt": 0,
+            "cause": "nondeterminism_detected",
+            "kind": "marker",
+            "random": "9f86d081884c7d659a2feaa0c55ad015",
+            "run_id": "run_fixture",
+            "seq": 6,
+            "state_hash": "e97fc926fa6ba5a616ce2ba47668dad1e9a173d8e6dd2b161a2aba82475dd431",
+            "status": "failed",
+            "step_id": "nondeterminism",
+            "ts_ms": 1700000000000
+          }
+        ],
+        "kernel_state": {
+          "closed_steps": 1,
+          "status": "failed",
+          "step_no": 1,
+          "steps": {},
+          "usage_total": {
+            "cost_micro_usd": 0,
+            "cpu_ms": 0,
+            "tokens": 0
+          },
+          "v": 1
+        },
+        "run": {
+          "last_seq": 6,
+          "status": "failed"
+        },
+        "signal_waits": [],
+        "spawns": [],
+        "state": "{\"phase\":\"work\"}",
+        "state_hash": "e97fc926fa6ba5a616ce2ba47668dad1e9a173d8e6dd2b161a2aba82475dd431",
+        "state_inline": true,
+        "task_updates": [
+          {
+            "attempt": 1,
+            "status": "cancelled",
+            "task_id": "run_fixture:task#1"
+          }
+        ],
+        "tasks": [],
+        "timers": []
+      }
+    }
+  }
+}

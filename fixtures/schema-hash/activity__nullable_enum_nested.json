@@ -1,0 +1,160 @@
+{
+  "kind": "activity",
+  "name": "ideas.decide",
+  "retry": {
+    "max_attempts": 5,
+    "backoff": "exponential",
+    "initial_ms": 500,
+    "max_ms": 60000,
+    "factor": 2,
+    "jitter": "full"
+  },
+  "cases": [
+    {
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "goal": {
+            "type": "string",
+            "description": "The goal"
+          },
+          "draft": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "n": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "e": {
+            "type": "string",
+            "enum": [
+              "a",
+              "b"
+            ]
+          },
+          "tags": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "title": "tag"
+            }
+          },
+          "pairs": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "description": "k"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          }
+        },
+        "required": [
+          "goal",
+          "draft",
+          "e",
+          "tags"
+        ],
+        "additionalProperties": false
+      },
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string"
+          },
+          "args": {}
+        },
+        "required": [
+          "tool"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "projected": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "goal": {
+          "type": "string"
+        },
+        "draft": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "n": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "e": {
+          "type": "string",
+          "enum": [
+            "a",
+            "b"
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pairs": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "required": [
+        "goal",
+        "draft",
+        "e",
+        "tags"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "tool": {
+          "type": "string"
+        },
+        "args": {}
+      },
+      "required": [
+        "tool"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "hash": "9e7684b37645e643",
+  "schema_ref": "ideas.decide@9e7684b37645e643"
+}

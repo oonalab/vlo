@@ -1,0 +1,22 @@
+{
+  "export": "validate_event",
+  "input": {
+    "attempt": 0,
+    "kind": "task",
+    "payload": "1",
+    "payload_ref": "blob://sha256/abc",
+    "random": "9f86d081884c7d659a2feaa0c55ad015",
+    "run_id": "run_fixture",
+    "status": "succeeded",
+    "step_id": "task#1",
+    "ts_ms": 1700000000000
+  },
+  "output": {
+    "error": {
+      "code": "invalid_event",
+      "message": "at most one of payload / payload_ref",
+      "step_id": "task#1"
+    },
+    "ok": false
+  }
+}

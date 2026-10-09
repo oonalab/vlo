@@ -1,0 +1,16 @@
+{
+  "export": "derive_ids",
+  "input": {
+    "attempt": 2,
+    "run_id": "run_fixture",
+    "step_id": "task#1"
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "child_run_id": "run_2c2dbcc147aca4351434f5182a",
+      "idempotency_key": "run_fixture:task#1:2",
+      "task_id": "run_fixture:task#1"
+    }
+  }
+}

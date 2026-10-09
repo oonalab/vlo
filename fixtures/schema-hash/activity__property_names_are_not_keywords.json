@@ -1,0 +1,83 @@
+{
+  "kind": "activity",
+  "name": "example.names",
+  "retry": {
+    "max_attempts": 3,
+    "backoff": "exponential",
+    "initial_ms": 1000,
+    "max_ms": 600000,
+    "factor": 2,
+    "jitter": "full"
+  },
+  "cases": [
+    {
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "string",
+            "default": "d"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "description": "kept as a name, stripped as a keyword"
+          }
+        },
+        "required": [
+          "default",
+          "title",
+          "description"
+        ],
+        "additionalProperties": false
+      },
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "patternProperties": {
+          "^x-": {
+            "type": "string",
+            "title": "ext"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  ],
+  "projected": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "default",
+        "title",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "patternProperties": {
+        "^x-": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "hash": "f93aa2a18cff292f",
+  "schema_ref": "example.names@f93aa2a18cff292f"
+}

@@ -1,0 +1,16 @@
+{
+  "export": "kernel_version",
+  "input": null,
+  "output": {
+    "ok": true,
+    "value": {
+      "features": [
+        "canonical_json_v1",
+        "state_hash_v1",
+        "refold_v1"
+      ],
+      "protocol": 1,
+      "version": "0.1.0"
+    }
+  }
+}

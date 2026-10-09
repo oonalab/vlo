@@ -1,0 +1,24 @@
+{
+  "export": "plan_retry",
+  "input": {
+    "attempt": 2,
+    "cause": "timeout",
+    "policy": {
+      "backoff": "exponential",
+      "factor": 2,
+      "initial_ms": 1000,
+      "jitter": "full",
+      "max_attempts": 3,
+      "max_ms": 600000
+    },
+    "random": "9f86d081884c7d659a2feaa0c55ad015"
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "delay_ms": 1246,
+      "next_attempt": 3,
+      "retry": true
+    }
+  }
+}

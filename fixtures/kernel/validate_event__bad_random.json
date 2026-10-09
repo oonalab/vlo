@@ -1,0 +1,20 @@
+{
+  "export": "validate_event",
+  "input": {
+    "attempt": 0,
+    "kind": "task",
+    "random": "not-hex",
+    "run_id": "run_fixture",
+    "status": "succeeded",
+    "step_id": "task#1",
+    "ts_ms": 1700000000000
+  },
+  "output": {
+    "error": {
+      "code": "invalid_event",
+      "message": "random must be 32 lowercase hex chars",
+      "step_id": "task#1"
+    },
+    "ok": false
+  }
+}

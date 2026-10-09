@@ -1,0 +1,40 @@
+{
+  "export": "compute_state_hash",
+  "input": {
+    "kernel_state": {
+      "closed_steps": 0,
+      "status": "running",
+      "step_no": 1,
+      "steps": {
+        "task#1": {
+          "activity": "plan",
+          "attempt": 1,
+          "kind": "task",
+          "queue": "default",
+          "retry": {
+            "backoff": "exponential",
+            "factor": 2,
+            "initial_ms": 1000,
+            "jitter": "full",
+            "max_attempts": 3,
+            "max_ms": 600000
+          },
+          "status": "running"
+        }
+      },
+      "usage_total": {
+        "cost_micro_usd": 0,
+        "cpu_ms": 0,
+        "tokens": 0
+      },
+      "v": 1
+    },
+    "state": "{ \"b\": 2, \"a\": 1 }"
+  },
+  "output": {
+    "ok": true,
+    "value": {
+      "hash": "e4fde09e69a2cd11942df9232a0e0660186f6ada37a9159bc04feb35f2145de8"
+    }
+  }
+}
