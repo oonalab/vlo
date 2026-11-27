@@ -31,8 +31,21 @@ const fixtures = readdirSync(FIXTURES_DIR)
 const kernel = await loadKernel();
 const wasm = await import("../../wasm/vlo_kernel.js");
 
+/**
+ * The fixture holds this in place of the crate version (see `crates/kernel/tests/common/golden.rs`):
+ * a release bumps the crate, while the committed wasm keeps the version it was built at.
+ */
+const VERSION_PLACEHOLDER = "<crate version>";
+
+function maskedVersion(): string {
+  const result = JSON.parse(wasm.kernel_version()) as { value: { version: string } };
+  expect(result.value.version).toMatch(/^\d+\.\d+\.\d+$/);
+  result.value.version = VERSION_PLACEHOLDER;
+  return JSON.stringify(result);
+}
+
 const exports: Record<string, (input: string) => string> = {
-  kernel_version: () => wasm.kernel_version(),
+  kernel_version: maskedVersion,
   validate_event: wasm.validate_event,
   prepare_event: wasm.prepare_event,
   reduce_step: wasm.reduce_step,
