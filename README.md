@@ -2,29 +2,56 @@
 
 [![npm version](https://img.shields.io/npm/v/@oona/vlo)](https://www.npmjs.com/package/@oona/vlo)
 
-A durable execution engine where a workflow is a pure reducer:
+**Durable execution for workflows and AI agents, as a library on the database you already run.**
+
+Long-running work fails halfway: an agent on its fortieth step, a render that takes three
+hours, an approval that takes two days. Vlo keeps that work alive through crashes and
+restarts, and it does so without a cluster, a broker or a vendor platform.
+
+| | What you get | Proof |
+| --- | --- | --- |
+| **Tiny** | An engine that is a dependency, with no service to stand up. | A 298 KB wasm kernel, under 600 KB with the host. Size caps are enforced in CI. |
+| **Performant** | Steps and resumes that stay fast as a run grows. | A run with 20,018 events resumes as fast as a run with 38. See [Performance](docs/performance.md). |
+| **Reliable** | Work that is never lost, and state that is never silently wrong. | Commit before acknowledge everywhere, and a hash check on every checkpoint. See [Reliability](docs/reliability.md). |
+| **Efficient** | You pay for compute only while a step runs. | A waiting run is about 2 KB of rows and no process. An agent that reaches its budget parks instead of burning money. |
+| **Built for the edge** | One engine that can run beside your data. | The kernel has no I/O and runs anywhere wasm runs. Cloud Run, Vercel and containers work today; the edge host is not built yet. See [Status](docs/status.md). |
+
+One design principle makes all five possible. A workflow is a pure reducer:
 
 ```
 (state, event) → (state, commands)
 ```
 
-The kernel appends the event to the run's journal, folds it, and persists the new state and
-the commands in one transaction. The host then pushes the commands out as tasks, timers,
-child runs or signal waits. Nothing suspends, so there is no code replay, no poll driver and
-no sandbox: **state is the snapshot**, and the kernel proves determinism by re-folding the
-journal and comparing hashes.
+An event comes in, new state and commands come out, and both are saved in one database
+transaction. Between events a run is only rows in your Postgres or a SQLite file. Nothing
+stays suspended, so there is no stack to save, no sandbox to run and no code to replay.
 
-- **Kernel** — Rust, no I/O, compiled to wasm (under 300 KB). `crates/`.
-- **Host** — TypeScript on Node, runs on Cloud Run, Vercel, a container or a laptop. `sdk/ts/sdk`.
-- **Journal = queue** — your Postgres (works behind transaction-mode poolers) or a SQLite file.
-- **Workers** — any language, pushed over signed HTTP or pulling from the API.
-- **Agents** — `@oona/vlo/agent`, in the same package: decide → act → evaluate with a budget that parks, not fails. `sdk/ts/sdk/src/agent`.
+## Why teams building agents pick it
+
+- **An agent survives a crash mid-thought.** Every decision, tool call and score is one
+  journaled event. Kill the process and the run continues from its last event.
+- **A budget parks the run instead of killing it.** The kernel meters tokens and cost on
+  every event, including failed attempts. An agent that runs out waits for a top-up and
+  keeps everything it has already paid for.
+- **Waiting costs nothing.** A run waiting on a person, a webhook or a budget holds no
+  compute and no connection.
+- **A human approval is one signed link.** Opening the link changes nothing; confirming it
+  resumes the run.
+- **Tools run anywhere, in any language.** A worker is an HTTP endpoint or a polling
+  process, with typed inputs and outputs.
+- **The journal is the trace.** Every step, retry, token and decision is a row you can
+  query.
+
+Start with [Build an agent harness](docs/agent-harness.md), or read [Why Vlo](docs/why-vlo.md)
+for the full argument and the honest list of what Vlo does not have yet.
 
 ## Try it
 
 ```sh
 pnpm add @oona/vlo zod        # Node ≥ 22.5
 ```
+
+A complete program is three files: a workflow, a worker and a config.
 
 ```ts
 // hello.workflow.ts
@@ -82,18 +109,45 @@ curl -s -X POST localhost:4100/v1/runs -H 'content-type: application/json' \
 curl -s localhost:4100/v1/runs/<run_id>                    # → "status":"completed", "output":{"greeting":"Hello, world!"}
 ```
 
-That program, plus a fan-out pipeline with a human approval and an agent loop with a budget,
-lives in [`examples/`](examples/hello/README.md). Each runs with one command.
+Most pipelines do not need a hand-written reducer. The `sequence` helper reads as a list of
+steps, and `agentLoop` builds a whole agent:
+
+```ts
+sequence([step(plan), fanOut(work, selectItems, { concurrency: 2 }), waitFor(approve), step(finish)]);
+
+agentLoop({ decide, tools: { search, write }, evaluate, threshold: 0.9, budget: { tokens: 20_000 } });
+```
+
+Three runnable examples live in [`examples/`](examples/hello/README.md), each started with
+one command:
+
+| Example | What it shows |
+| --- | --- |
+| [hello](examples/hello/README.md) | One workflow, one activity, and the journal printed event by event. |
+| [pipeline](examples/pipeline/README.md) | Plan, fan out two at a time, wait for a human, finish. |
+| [agent](examples/agent/README.md) | An agent that spends 18 tokens against a budget of 15, parks, and resumes on a top-up. |
+
+## What is inside
+
+- **Kernel**: Rust with no I/O, compiled to wasm. `crates/`.
+- **Host**: TypeScript on Node. Runs on Cloud Run, Vercel, a container or a laptop. `sdk/ts/sdk`.
+- **Journal**: your Postgres (it works behind transaction-mode poolers) or a SQLite file. It
+  is also the task queue, so there is no broker.
+- **Workers**: any language, pushed over signed HTTP or pulling from the API.
+- **Agents**: `@oona/vlo/agent`, in the same package. `sdk/ts/sdk/src/agent`.
 
 ## Documentation
 
 The docs are published at **<https://oonalab.github.io/vlo/>**, with the TypeScript and Rust
 API references alongside.
 
-Start with [Getting started](docs/getting-started.md), then [Concepts](docs/concepts.md).
-The full index is [docs/README.md](docs/README.md): workflows, activities and workers,
-signals and humans, agents, configuration, CLI, deployment, journal, HTTP API,
-observability, errors, kernel protocol, architecture, design decisions, limits.
+| If you want to | Read |
+| --- | --- |
+| Get a run going in ten minutes | [Getting started](docs/getting-started.md) |
+| Decide whether Vlo fits | [Why Vlo](docs/why-vlo.md), [Performance](docs/performance.md), [Reliability](docs/reliability.md), [Status and roadmap](docs/status.md) |
+| Build an agent | [Build an agent harness](docs/agent-harness.md), [Agents](docs/agents.md) |
+| Find a how-to | [Recipes](docs/recipes.md), [FAQ](docs/faq.md) |
+| See everything | [The full index](docs/README.md) |
 
 To build the API reference locally: `pnpm --filter @oona/vlo docs:api` (TypeDoc) and
 `cargo doc --workspace --open`. `pnpm docs:dev` previews the site.

@@ -1,9 +1,18 @@
 # Agents
 
-`@oona/vlo/agent` ships inside `@oona/vlo` and builds a decide → tool → evaluate loop as a pure reducer. Nothing loops at
-runtime: every arrow is one journaled event folded into state, so an agent survives a crash
-mid-thought and replays deterministically. The budget is a reducer decision over the usage
-the kernel banks on each event; exhaustion parks the run on a signal instead of failing it.
+`@oona/vlo/agent` builds a decide → tool → evaluate loop that survives crashes, stays inside
+a budget and waits for people. It ships inside `@oona/vlo`.
+
+- **An agent survives a crash mid-thought.** Nothing loops at runtime: every arrow in the
+  diagram below is one journaled event folded into state. Kill the process and the run
+  continues from its last event.
+- **A spent budget parks the run instead of failing it.** The kernel banks usage on every
+  event, including failed attempts. The run waits for a top-up and keeps what it has done.
+- **Bad model output is an ordinary outcome.** An unknown tool or invalid arguments becomes
+  an observation, and the model decides again.
+
+This page is the reference. For a walkthrough with a model call, approvals and parallel
+agents, see [agent-harness.md](./agent-harness.md).
 
 ```sh
 pnpm add @oona/vlo zod

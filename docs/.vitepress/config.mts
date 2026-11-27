@@ -113,7 +113,7 @@ function generatedReferences(): Plugin {
 const config = withMermaid({
   title: "Vlo",
   description:
-    "An event-sourced durable execution engine for workflows and agents. Workflows are pure reducers; your Postgres or SQLite is the journal.",
+    "Durable execution for workflows and AI agents, as a library on the database you already run. Tiny, performant, reliable, efficient and built for the edge.",
   base,
   cleanUrls: true,
   // `docs/README.md` is the index on GitHub and the home page here.
@@ -159,6 +159,8 @@ const config = withMermaid({
   themeConfig: {
     nav: [
       { text: "Guide", link: "/getting-started" },
+      { text: "Why Vlo", link: "/why-vlo" },
+      { text: "Agents", link: "/agent-harness" },
       { text: "TypeScript API", link: "/api/", activeMatch: "^/api/" },
       // rustdoc keeps its own look, so it opens as the separate site it is.
       { text: "Rust API", link: "/rustdoc/", target: "_blank" },
@@ -167,28 +169,40 @@ const config = withMermaid({
       "/api/": [{ text: "TypeScript API", link: "/api/", items: apiSidebar }],
       "/": [
         {
-          text: "Learn",
+          text: "Evaluate",
           items: [
-            { text: "Getting started", link: "/getting-started" },
-            { text: "Concepts", link: "/concepts" },
             { text: "Why Vlo", link: "/why-vlo" },
-            { text: "Workflows", link: "/workflows" },
-            { text: "Activities and workers", link: "/activities-and-workers" },
-            { text: "Signals and humans", link: "/signals-and-humans" },
-            { text: "Agents", link: "/agents" },
+            { text: "Performance", link: "/performance" },
+            { text: "Reliability", link: "/reliability" },
+            { text: "Status and roadmap", link: "/status" },
+            { text: "FAQ", link: "/faq" },
           ],
         },
         {
-          text: "Reference",
+          text: "Build",
+          items: [
+            { text: "Getting started", link: "/getting-started" },
+            { text: "Concepts", link: "/concepts" },
+            { text: "Workflows", link: "/workflows" },
+            { text: "Activities and workers", link: "/activities-and-workers" },
+            { text: "Signals and humans", link: "/signals-and-humans" },
+            { text: "Build an agent harness", link: "/agent-harness" },
+            { text: "Agents", link: "/agents" },
+            { text: "Testing", link: "/testing" },
+            { text: "Recipes", link: "/recipes" },
+          ],
+        },
+        {
+          text: "Operate",
           items: [
             { text: "Configuration", link: "/configuration" },
             { text: "CLI", link: "/cli" },
+            { text: "Deployment", link: "/deployment" },
+            { text: "Observability", link: "/observability" },
             { text: "HTTP API", link: "/http-api" },
             { text: "Journal", link: "/journal" },
             { text: "Errors", link: "/errors" },
             { text: "Limits", link: "/limits" },
-            { text: "Observability", link: "/observability" },
-            { text: "Deployment", link: "/deployment" },
           ],
         },
         {

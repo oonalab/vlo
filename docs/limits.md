@@ -25,12 +25,24 @@ the runtime imports:
 
 | Artifact | Budget | Today |
 | --- | --- | --- |
-| `wasm/vlo_kernel_bg.wasm` | 1 MiB (1 048 576 bytes); also enforced by `scripts/build-kernel.sh` and warned on by `vlo doctor` | ~290 KB, built with `opt-level = "z"`, fat LTO, `panic = "abort"`, `strip`, `wasm-opt` off |
+| `wasm/vlo_kernel_bg.wasm` | 1 MiB (1 048 576 bytes); also enforced by `scripts/build-kernel.sh` and warned on by `vlo doctor` | 297 573 bytes (298 KB), built with `opt-level = "z"`, fat LTO, `panic = "abort"`, `strip`, `wasm-opt` off |
 | Runtime JS: every `dist/*.js` chunk reachable from `index.js` and `host.js` (what `@oona/vlo` and `@oona/vlo/host` load) | 256 KB (262 144 bytes) | ~196 KB |
 | CLI JS: `cli.js` and the chunks only it reaches | 96 KB (98 304 bytes) | ~54 KB |
 
 The CI gate on the kernel is semantic, not byte-identical: the committed wasm and a
 freshly built one must both pass every golden fixture (see [kernel protocol](kernel-protocol.md)).
+
+## Known weak spots
+
+These are measured, not theoretical. The setup behind the numbers is in
+[performance.md](./performance.md#setup).
+
+| Weak spot | What was measured | What to do |
+| --- | --- | --- |
+| **Database round trips per step** | One step makes about 15 round trips to the database, so step time is roughly 15 times the round trip. With a 23 ms round trip, a step took 336 ms. | Run the host in the same region as its journal. |
+| **Very wide fan-out in one run** | 1,000 tasks inside a single run finished at 45 per second, against 975 per second across separate runs. Per-task cost grows with the width of the run. | Fan out wide work as child runs with `fanOutRuns`, each with its own journal. |
+| **Throughput is bounded by the database** | By design: low thousands of tasks per second on Postgres. Not load-tested on server hardware. | Add a broker as a delivery transport if you need more; the journal still records everything. |
+| **Reducer purity is not enforced** | A TypeScript reducer could read the clock or call the network, and no lint catches it. | Keep reducers pure. A mistake surfaces as `nondeterminism_detected` when a run is rebuilt. |
 
 ## Dispatcher, lease and retry defaults
 
@@ -87,7 +99,8 @@ takes the file's write lock with `BEGIN IMMEDIATE`. Consequences:
 
 ## Not available on edge runtimes yet
 
-The host runs on Node today. The kernel already compiles to `wasm32-unknown-unknown` with no
+Vlo is built to run at the edge, and it does not run there yet. The host runs on Node
+today. The kernel already compiles to `wasm32-unknown-unknown` with no
 imports, which is what an edge host needs, but the surrounding pieces are Node-only:
 
 - **Cloudflare Workers / Durable Objects** as a host and journal are deferred. There is no

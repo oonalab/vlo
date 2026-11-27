@@ -1,10 +1,14 @@
 # Getting started
 
-Vlo is a durable execution engine. You write a workflow as a pure reducer,
-`(state, event) → [state, commands]`. The engine appends each event to the run's journal,
-folds it, and persists the new state and the commands in one transaction. The host then
-turns the commands into tasks for workers, timers, child runs and signal waits. State is
-the snapshot: nothing replays your code.
+In ten minutes you will have a durable workflow running on your laptop, with no Docker and
+no cloud account. Then you will kill the process and watch the run continue.
+
+Vlo keeps long-running work alive through crashes and restarts. You write a workflow as a
+pure reducer, `(state, event) → [state, commands]`, and Vlo saves each step in one database
+transaction. Between steps a run is only rows in a database, so there is nothing to lose
+when a process dies.
+
+Building an agent? Do this page first, then go to [agent-harness.md](./agent-harness.md).
 
 ## Install
 
@@ -154,6 +158,49 @@ const done = await client.waitFor(started.run_id, "completed");
 The worker runs in the same process as the engine. Moving it to another machine is a
 config change, not a code change: see [activities-and-workers.md](./activities-and-workers.md).
 
+## Kill it and watch it continue
+
+This is the point of durable execution, and you can see it in a minute. The
+[pipeline example](../examples/pipeline/) plans three items, processes them two at a time,
+then waits for a person. Run it from a checkout of the repository:
+
+```sh
+pnpm install                                               # once, from the repository root
+cd examples && pnpm dev:pipeline                           # API on :4100
+```
+
+In a second terminal, start a run and look at it:
+
+```sh
+curl -s -X POST localhost:4100/v1/runs -H 'content-type: application/json' \
+  -d '{"workflow":"pipeline","input":{"n":3}}'            # → {"run_id":"run_…"}
+curl -s localhost:4100/v1/runs/<run_id>                    # "status":"awaiting_signal"
+```
+
+The run is now waiting for an approval. **Stop the host with Ctrl-C.** No process is
+running for this run; it is a few rows in `examples/pipeline/.vlo/pipeline.db`.
+
+Start the host again and approve:
+
+```sh
+pnpm dev:pipeline
+curl -s localhost:4100/v1/runs/<run_id>                    # still "awaiting_signal"
+curl -s -X POST localhost:4100/v1/runs/<run_id>/signals/pipeline.approve \
+  -H 'content-type: application/json' -d '{"by":"you"}'   # → {"delivered":true}
+curl -s localhost:4100/v1/runs/<run_id>                    # "status":"completed"
+```
+
+The run finished with the work it did before the restart. Read its history, event by event:
+
+```sh
+curl -s localhost:4100/v1/runs/<run_id>/events
+```
+
+What happened: on restart the host loaded the run's one checkpoint row, checked its hash and
+carried on. It did not re-run your workflow. A task that was in flight when the process
+died is handled the same way with one extra step: its lease lapses (60 seconds by default)
+and the retry policy starts a fresh attempt. See [reliability.md](./reliability.md).
+
 ## Examples
 
 - [`../examples/hello/`](../examples/hello/) — the program above.
@@ -164,11 +211,14 @@ config change, not a code change: see [activities-and-workers.md](./activities-a
 
 | Page | What it covers |
 | --- | --- |
+| [agent-harness.md](./agent-harness.md) | An agent end to end: tools, budget, approvals, crash recovery |
+| [recipes.md](./recipes.md) | Short answers to "how do I…" |
 | [concepts.md](./concepts.md) | Runs, steps, events, commands, roles, the journal |
 | [workflows.md](./workflows.md) | The reducer contract, every `cmd.*`, the `sequence` helpers |
 | [activities-and-workers.md](./activities-and-workers.md) | Activities, retries, leases, push and pull workers |
 | [signals-and-humans.md](./signals-and-humans.md) | Signals, deadlines, signed links |
-| [agents.md](./agents.md) | `@oona/vlo/agent`: decide → tool → evaluate with a budget |
+| [agents.md](./agents.md) | `@oona/vlo/agent` reference: options, step ids, state and result |
+| [testing.md](./testing.md) | Unit tests for reducers, end-to-end tests with no socket |
 | [configuration.md](./configuration.md) | The whole `vlo.config.ts` reference |
 | [cli.md](./cli.md) | `vlo dev`, `serve`, `doctor`, `deploy` |
 | [deployment.md](./deployment.md) | Self-hosting, serverless, role splitting |

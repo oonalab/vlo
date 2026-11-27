@@ -99,7 +99,8 @@ disagrees with the journal fails the run with `nondeterminism_detected`. Details
 
 ## Further reading
 
-- [why-vlo.md](./why-vlo.md) — how the reducer compares with replay-based engines.
+- [why-vlo.md](./why-vlo.md) — what the reducer buys you, and what it costs.
+- [reliability.md](./reliability.md) — what Vlo guarantees, in one place.
 - [journal.md](./journal.md) — tables, dialects, the checkpoint.
 - [kernel-protocol.md](./kernel-protocol.md) — the host ⇄ kernel calls.
 - [architecture.md](./architecture.md) — how the pieces are laid out.

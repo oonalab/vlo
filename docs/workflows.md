@@ -194,6 +194,10 @@ A handler may read only its arguments. In particular:
 - Expect at-least-once delivery: ignore an event you are not waiting for instead of acting
   on it twice. `sequence` and `agentLoop` do this by checking `step_id` and phase.
 
+Nothing enforces these rules yet: a reducer is a plain function, and no lint or sandbox
+stops it from reading the clock. A mistake is caught when a run is rebuilt from its
+journal, as described next.
+
 The host verifies the checkpoint's hash every time it loads one. If the checkpoint is
 missing, or was written by a different workflow digest, it folds the journal from seq 0
 and compares every transition's `state_hash` with the one journaled on that event. Any
@@ -220,5 +224,6 @@ const next = exampleWorkflow.reduce(begun.state, {
 // next.state is JSON text; next.commands is the Command[] the handler returned.
 ```
 
-`NONE` is `{ cpu_ms: 0, tokens: 0, cost_micro_usd: 0 }`. The reference tests in
+`NONE` is `{ cpu_ms: 0, tokens: 0, cost_micro_usd: 0 }`. End-to-end tests on an in-process
+host, and tests for agents, are covered in [testing.md](./testing.md). The reference tests in
 [`../sdk/ts/sdk/test/human.test.ts`](../sdk/ts/sdk/test/human.test.ts) are written this way.
