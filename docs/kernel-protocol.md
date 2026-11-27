@@ -185,6 +185,9 @@ mint the same `schema_ref` for the same definition.
   `UPDATE_FIXTURES=1 cargo test -p vlo-kernel` regenerates them. `src/kernel/kernel.test.ts`
   replays every fixture through the compiled wasm, so a mismatch means the committed wasm
   drifted from the Rust source.
+  One field is masked in both replays: `kernel_version.json` holds `"<crate version>"` in
+  place of the version, because a release bumps the crate while the committed wasm keeps
+  the version it was built at. Both harnesses still check that the real value is a semver.
 - `scripts/build-kernel.sh` runs `wasm-pack build --release --target web` on
   `crates/kernel-wasm`, remaps source paths so the artifact is reproducible on one platform,
   writes `sdk/ts/sdk/wasm/`, and fails over 1 MiB. The output is committed; a JS consumer

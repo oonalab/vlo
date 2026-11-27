@@ -33,8 +33,27 @@ fn invoke(export: &str, input: &Value) -> Value {
     serde_json::from_str(&output).expect("export returned invalid JSON")
 }
 
+/// What a fixture holds in place of the crate version. The version names a build, not a
+/// behaviour: it moves on every release, while the wasm committed under `sdk/ts/sdk/wasm/`
+/// keeps the version it was built at. A fixture that pinned it would fail on every release.
+pub const VERSION_PLACEHOLDER: &str = "<crate version>";
+
+/// `kernel_version` with the crate version masked; every other export unchanged.
+fn stable(export: &str, mut output: Value) -> Value {
+    if export == "kernel_version" {
+        if let Some(version) = output.pointer_mut("/value/version") {
+            assert!(
+                version.as_str().is_some_and(|v| v.split('.').count() == 3),
+                "kernel_version must report a semver crate version, got {version}"
+            );
+            *version = json!(VERSION_PLACEHOLDER);
+        }
+    }
+    output
+}
+
 pub fn check(name: &str, export: &str, input: Value) {
-    let output = invoke(export, &input);
+    let output = stable(export, invoke(export, &input));
     let document = json!({ "export": export, "input": input, "output": output });
     let rendered = serde_json::to_string_pretty(&document).expect("render") + "\n";
     let path = fixtures_dir().join(format!("{name}.json"));
