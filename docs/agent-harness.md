@@ -14,8 +14,16 @@ and shows what the engine gives you for free.
 | Run tools wherever they live | A tool is an activity. Its worker can be in-process, a serverless function or a Python service. |
 | Show what happened | The journal is the trace: every step, retry and token is a row. |
 
-The reference for every option is [agents.md](./agents.md). A runnable version of this
-guide, with no model key needed, is [`../examples/agent/`](../examples/agent/).
+The reference for every option is [agents.md](./agents.md).
+
+**Everything on this page is runnable.** The code is
+[`../examples/harness/`](../examples/harness/), which uses a scripted model so it needs no
+API key. It is typechecked and tested in CI. From a checkout:
+
+```sh
+pnpm install                       # once, from the repository root
+cd examples && pnpm dev:harness    # API on :4100
+```
 
 ## How the loop works
 
@@ -37,14 +45,10 @@ flowchart TD
 
 ## 1. Declare the tools
 
-A tool is an ordinary activity with typed input and output.
+A tool is an ordinary activity with typed input and output. `activities.ts`:
 
+<!-- snippet: examples/harness/activities.ts -->
 ```ts
-// activities.ts
-import { z } from "zod";
-import { activity } from "@oona/vlo";
-import { budgetTopup, decision } from "@oona/vlo/agent";
-
 export const search = activity("research.search", {
   input: z.object({ query: z.string() }),
   output: z.object({ results: z.array(z.string()) }),
@@ -66,8 +70,8 @@ export const evaluate = activity("research.evaluate", {
 `decision` is the activity behind which your model call lives. Its output is fixed by the
 tool registry, so the model can only name a tool the loop can run, or `"done"`.
 
+<!-- snippet: examples/harness/activities.ts -->
 ```ts
-// activities.ts, continued
 export const decide = decision("research.decide", {
   input: z.object({
     goal: z.unknown(),
@@ -85,8 +89,10 @@ The decision returns `{ tool, args?, rationale?, final? }`.
 
 ## 3. Build the loop
 
+`research.workflow.ts`:
+
+<!-- snippet: examples/harness/research.workflow.ts -->
 ```ts
-// research.workflow.ts
 import { defineWorkflow } from "@oona/vlo";
 import { agentLoop } from "@oona/vlo/agent";
 import { decide, evaluate, search, topup, write } from "./activities.ts";
@@ -111,33 +117,39 @@ run completes on its own.
 ## 4. Put the model in a worker
 
 The worker is where the model call happens. Report what each call spent, so the budget
-means something.
+means something. `research.worker.ts`:
 
+<!-- snippet: examples/harness/research.worker.ts -->
 ```ts
-// research.worker.ts
 import { defineWorker } from "@oona/vlo";
+import { decideNext, grade, webSearch, writeReport, type DecideInput } from "./model.ts";
 
 export default defineWorker({
-  "research.decide": async (input: { goal: unknown; memory: unknown[] }, ctx) => {
-    const reply = await callModel(input, { signal: ctx.signal }); // your model client
+  "research.decide": async (input: DecideInput, ctx) => {
+    const reply = await decideNext(input);
     ctx.reportUsage({ tokens: reply.tokens, costMicroUsd: reply.costMicroUsd });
-    return reply.finished
-      ? { tool: "done", final: reply.answer, rationale: reply.why }
-      : { tool: reply.tool, args: reply.args, rationale: reply.why };
+    return { tool: reply.tool, args: reply.args ?? null, rationale: reply.why };
   },
-  "research.search": async (input: { query: string }) => ({ results: await webSearch(input.query) }),
+
+  "research.search": async (input: { query: string }) => ({
+    results: await webSearch(input.query),
+  }),
+
   "research.write": async (input: { notes: string }, ctx) => {
-    const reply = await callModel({ write: input.notes }, { signal: ctx.signal });
+    const reply = await writeReport(input.notes);
     ctx.reportUsage({ tokens: reply.tokens, costMicroUsd: reply.costMicroUsd });
     return { text: reply.text };
   },
+
   "research.evaluate": async (input: { goal: unknown; candidate: unknown }) => ({
     score: await grade(input.goal, input.candidate),
   }),
 });
 ```
 
-`callModel`, `webSearch` and `grade` are your own code. Vlo does not ship a model client
+`decideNext`, `writeReport`, `webSearch` and `grade` live in
+[`model.ts`](../examples/harness/model.ts). In the example they are scripted stand-ins; in
+your harness they are your model client and your tools. Vlo does not ship a model client
 and has no price table: `costMicroUsd` is whatever you report.
 
 Usage is banked on failed attempts too, so a model call that times out and retries still
@@ -145,20 +157,29 @@ counts against the budget.
 
 ## 5. Run it
 
+`vlo.config.ts`:
+
+<!-- snippet: examples/harness/vlo.config.ts -->
 ```ts
-// vlo.config.ts
 import { defineConfig } from "@oona/vlo";
 
 export default defineConfig({
   workflows: ["*.workflow.ts"],
   workers: ["*.worker.ts"],
   activities: ["activities.ts"],
-  profiles: { local: { journal: "sqlite://.vlo/dev.db", blob: "file://.vlo/blobs" } },
+  profiles: {
+    dev: {
+      journal: "sqlite://.vlo/harness.db",
+      blob: "file://.vlo/blobs",
+      roles: ["orchestrator", "api", "worker:default"],
+      dispatcher: { mode: "loop" },
+    },
+  },
 });
 ```
 
 ```sh
-npx vlo dev
+pnpm dev:harness
 ```
 
 ```ts
@@ -168,7 +189,8 @@ const client = createClient({ baseUrl: "http://localhost:4100" });
 const run = await client.start("research", { topic: "durable execution" });
 ```
 
-The run input is the agent's goal.
+The run input is the agent's goal. With the scripted model the agent searches, writes a
+short report, scores 0.95 and completes, having spent 1,400 tokens.
 
 ## 6. Watch it think
 
@@ -221,16 +243,13 @@ Because each recovery is another iteration, it counts against `budget.steps` and
 ## 9. Add a human approval
 
 `agentLoop` has no built-in approval step. Run the agent as a child of a pipeline that
-waits for a person before acting on the result:
+waits for a person before acting on the result. `publish.workflow.ts`:
 
+<!-- snippet: examples/harness/publish.workflow.ts -->
 ```ts
-// publish.workflow.ts
-import { defineWorkflow, fanOutRuns, fanOutRunsResultsOf, sequence, signal, signalOf, step, waitFor } from "@oona/vlo";
-import { z } from "zod";
+import { defineWorkflow, fanOutRuns, fanOutRunsResultsOf, sequence, signalOf, step, waitFor } from "@oona/vlo";
+import { approve, publish } from "./activities.ts";
 import research from "./research.workflow.ts";
-import { publish } from "./activities.ts";
-
-export const approve = signal("publish.approve", z.object({ by: z.string().optional() }));
 
 export default defineWorkflow(
   "publish",
@@ -238,25 +257,33 @@ export default defineWorkflow(
     fanOutRuns(research, (state) => [state.input], { concurrency: 1 }),
     waitFor(approve, { timeoutMs: 172_800_000, onTimeout: "fail" }),
     step(publish, (state) => ({
-      draft: fanOutRunsResultsOf(state, research)[0]?.output,
-      approvedBy: signalOf(state, approve)?.by ?? "link",
+      draft: fanOutRunsResultsOf(state, research)[0]?.output ?? null,
+      approvedBy: signalOf(state, approve).by ?? "link",
     })),
   ]),
 );
 ```
 
-`publish` is one more activity, declared like the tools in step 1. The pipeline waits up to two days and costs nothing while it does. To approve a single
-tool call inside the loop, write the loop as your own reducer and add a `cmd.awaitSignal`
-before the task; see [workflows.md](./workflows.md).
+`publish` and `approve` are declared in `activities.ts` like the tools in step 1. The
+pipeline waits up to two days and costs nothing while it does. Approve it with:
+
+<!-- snippet: examples/harness/harness.test.ts -->
+```ts
+await client.signal(run.run_id, approve, { by: "dana" });
+```
+
+To approve a single tool call inside the loop, write the loop as your own reducer and add
+a `cmd.awaitSignal` before the task; see [workflows.md](./workflows.md).
 
 ## 10. Run agents in parallel
 
 Each agent is a run, so a team of agents is a fan-out of child runs with a concurrency
 limit:
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
-fanOutRuns(
-  research,
+export const agents = fanOutRuns(
+  "research",
   (state) => (state.input as { topics: string[] }).topics.map((topic) => ({ topic })),
   { concurrency: 4 },
 );

@@ -2,7 +2,7 @@
   "name": "@oona/vlo-examples",
   "version": "0.0.0",
   "private": true,
-  "description": "Runnable Vlo examples: the smallest program, a fan-out pipeline with a human approval, and a budgeted agent loop.",
+  "description": "Runnable Vlo examples: the smallest program, a fan-out pipeline with a human approval, a budgeted agent loop, and an agent harness with an approval gate.",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
@@ -10,9 +10,11 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "dev:hello": "tsx ../sdk/ts/sdk/src/cli.ts dev --config hello/vlo.config.ts",
     "dev:pipeline": "tsx ../sdk/ts/sdk/src/cli.ts dev --config pipeline/vlo.config.ts",
-    "dev:agent": "tsx ../sdk/ts/sdk/src/cli.ts dev --config agent/vlo.config.ts"
+    "dev:agent": "tsx ../sdk/ts/sdk/src/cli.ts dev --config agent/vlo.config.ts",
+    "dev:harness": "tsx ../sdk/ts/sdk/src/cli.ts dev --config harness/vlo.config.ts"
   },
   "dependencies": {
     "@oona/vlo": "workspace:*",
@@ -21,6 +23,7 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.9"
   }
 }

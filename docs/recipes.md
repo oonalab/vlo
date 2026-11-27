@@ -1,6 +1,8 @@
 # Recipes
 
-Short answers to "how do I…". Each recipe links to the page with the full detail.
+Short answers to "how do I…". Each recipe links to the page with the full detail. The
+TypeScript on this page is typechecked in CI: it is copied from
+[`../examples/recipes/recipes.ts`](../examples/recipes/recipes.ts).
 
 | I want to | Recipe |
 | --- | --- |
@@ -22,13 +24,11 @@ Short answers to "how do I…". Each recipe links to the page with the full deta
 
 ## Wait for an approval, with a deadline
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
-import { sequence, signal, signalOf, step, waitFor } from "@oona/vlo";
-import { z } from "zod";
-
 export const approve = signal("order.approve", z.object({ by: z.string() }));
 
-sequence([
+export const order = sequence([
   step(prepare),
   waitFor(approve, { timeoutMs: 86_400_000, onTimeout: "fail" }),
   step(ship, (state) => ({ approvedBy: signalOf(state, approve).by })),
@@ -41,6 +41,7 @@ signal value is then `null`. See [signals-and-humans.md](./signals-and-humans.md
 
 ## Send an approval link
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
 const link = await client.signalLink(runId, approve, { expiresInMs: 86_400_000 });
 await sendEmail({ to: reviewer, body: `Approve here: ${link.url}` });
@@ -53,8 +54,14 @@ schema that accepts an empty one (optional fields, or `z.unknown()`). See
 
 ## Cap an agent's spend
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
-agentLoop({ decide, tools, budget: { tokens: 50_000, costMicroUsd: 2_000_000, steps: 25 } });
+export const capped = agentLoop({
+  decide,
+  tools,
+  budget: { tokens: 50_000, costMicroUsd: 2_000_000, steps: 25 },
+  topup,
+});
 ```
 
 Report usage from each worker with `ctx.reportUsage({ tokens, costMicroUsd })`. When a
@@ -66,8 +73,11 @@ ceiling is reached the run parks on `awaiting_signal` and keeps its work. Resume
 Every event carries the run's banked usage, and `sequence` keeps it in `state.usage`. Skip
 an expensive step once a ceiling is passed:
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
-step(polish, undefined, { when: (state) => (state.usage?.tokens ?? 0) < 100_000 });
+export const frugal = step(polish, undefined, {
+  when: (state) => (state.usage?.tokens ?? 0) < 100_000,
+});
 ```
 
 In a hand-written reducer, read `event.usage_total` and decide. See
@@ -77,21 +87,23 @@ In a hand-written reducer, read `event.usage_total` and decide. See
 
 Retries are part of the activity, not your handler:
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
 export const summarise = activity("doc.summarise", {
-  input: z.object({ text: z.string() }),
+  input: z.object({ text: z.string(), compact: z.boolean().optional() }),
   output: z.object({ summary: z.string() }),
   retry: { maxAttempts: 5, backoff: "exponential", initialMs: 2_000, maxMs: 60_000 },
   timeoutMs: 120_000,
 });
 ```
 
-Throw from the handler and the policy decides. If repeating the same request would fail the
-same way, change the input on later attempts:
+Throw from the handler and the policy decides. If repeating the same request would fail
+the same way, change the input on later attempts. Here `callModel` is your handler:
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
-defineWorker({
-  "doc.summarise": withRetryInput(summarise, (input, attempt) => ({ ...input, compact: attempt > 1 })),
+export const summariser = defineWorker({
+  "doc.summarise": withRetryInput(callModel, (input, attempt) => ({ ...input, compact: attempt > 1 })),
 });
 ```
 
@@ -108,15 +120,25 @@ is lost. See [activities-and-workers.md](./activities-and-workers.md#leases-hear
 
 For up to a few dozen items, fan out tasks inside the run:
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
-fanOut(resize, (state) => resultOf(state, list).images.map((image) => ({ image })), { concurrency: 4 });
+export const narrow = fanOut(
+  resize,
+  (state) => resultOf(state, list).images.map((image) => ({ image })),
+  { concurrency: 4 },
+);
 ```
 
 For hundreds or thousands, fan out child runs. One run with very many tasks slows down
 sharply; child runs do not have that problem.
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
-fanOutRuns(processImage, (state) => resultOf(state, list).images.map((image) => ({ image })), { concurrency: 20 });
+export const wide = fanOutRuns(
+  "process-image",
+  (state) => resultOf(state, list).images.map((image) => ({ image })),
+  { concurrency: 20 },
+);
 ```
 
 Read results with `fanOutResultsOf` and `fanOutRunsResultsOf`. See
@@ -124,9 +146,10 @@ Read results with `fanOutResultsOf` and `fanOutRunsResultsOf`. See
 
 ## Tolerate a failure
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
-step(notify, undefined, { onFailure: "continue" });
-fanOut(fetchSource, selectSources, { concurrency: 4, onFailure: "continue" });
+step(notify, undefined, { onFailure: "continue" }),
+fanOut(fetchSource, () => [{ url: "https://example.com" }], { concurrency: 4, onFailure: "continue" }),
 ```
 
 A failed step stores `null` instead of failing the run, so narrow the value when you read
@@ -136,6 +159,7 @@ it.
 
 Durable progress is the journal. Follow it over SSE:
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
 for await (const message of client.stream(runId)) {
   if (message.type === "journal") render(message.data.step_id, message.data.status);
@@ -152,6 +176,7 @@ SSE form of `GET /v1/runs/{id}/events`; see [http-api.md](./http-api.md).
 
 Choose the run id yourself. A second start with the same id does not create a second run.
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
 await client.start("weekly-report", { team }, { runId: `weekly_${team}_${isoWeek}` });
 ```
@@ -161,8 +186,9 @@ once the earlier runs have ended. See [http-api.md](./http-api.md).
 
 ## Sleep or wait until a time
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
-sequence([step(sendInvite), sleep(3 * 86_400_000), step(sendReminder)]);
+export const reminder = sequence([step(sendInvite), sleep(3 * 86_400_000), step(sendReminder)]);
 ```
 
 In a hand-written reducer use `cmd.timer({ ms })` or `cmd.timer({ atMs })` and handle
@@ -204,8 +230,9 @@ Also reject a `vlo-timestamp` more than five minutes old, and heartbeat on
 
 Set the queue to `mode: "pull"` and run a poller wherever the worker can reach the API:
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
-await runPullWorker({ baseUrl: "https://vlo.example.com", token: process.env.VLO_TOKEN, worker: mediaWorker });
+await runPullWorker({ baseUrl: "https://vlo.example.com", token: process.env.VLO_TOKEN!, worker: mediaWorker });
 ```
 
 See [activities-and-workers.md](./activities-and-workers.md#pull-mode).
@@ -215,6 +242,7 @@ See [activities-and-workers.md](./activities-and-workers.md#pull-mode).
 A run that loops for months should not carry its whole history. End it and start a
 successor with fresh history:
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
 return [state, [cmd.continueAsNew({ cursor: state.cursor })]];
 ```
@@ -224,6 +252,7 @@ The two runs are linked, and a parent is told once, by the run that finally clos
 
 ## Cancel a run
 
+<!-- snippet: examples/recipes/recipes.ts -->
 ```ts
 await client.cancel(runId);
 ```

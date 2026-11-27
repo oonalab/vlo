@@ -206,6 +206,7 @@ and the retry policy starts a fresh attempt. See [reliability.md](./reliability.
 - [`../examples/hello/`](../examples/hello/) — the program above.
 - [`../examples/pipeline/`](../examples/pipeline/) — plan → fan out → wait for a human → finish.
 - [`../examples/agent/`](../examples/agent/) — an `@oona/vlo/agent` loop with a budget.
+- [`../examples/harness/`](../examples/harness/) — an agent harness with a model worker and an approval gate.
 
 ## Where next
 

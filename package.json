@@ -13,6 +13,7 @@
     "typecheck": "pnpm -r typecheck",
     "docs:api": "pnpm --filter @oona/vlo docs:api",
     "check:links": "node scripts/check-links.mjs",
+    "check:snippets": "node scripts/check-snippets.mjs",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",

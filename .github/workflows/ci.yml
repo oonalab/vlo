@@ -115,6 +115,11 @@ jobs:
       - name: Test SDK
         run: pnpm --filter @oona/vlo test
 
+      # The examples are what the guides quote (see scripts/check-snippets.mjs), so their
+      # tests are what keeps the published code samples working.
+      - name: Test examples
+        run: pnpm --filter @oona/vlo-examples test
+
       # CI-built wasm against the same fixtures: proves source and committed artifact agree.
       # `exec vitest run <path>` so only the fixture replay runs here, not the whole suite.
       - name: Kernel source matches committed wasm
@@ -167,6 +172,10 @@ jobs:
 
       - name: Markdown links
         run: node scripts/check-links.mjs
+
+      # A code block tagged with its source file must still be in that file.
+      - name: Doc snippets
+        run: node scripts/check-snippets.mjs
 
       # The site docs.yml publishes from main. Building it here fails a pull request on a
       # dead link between pages before it can reach the published site.

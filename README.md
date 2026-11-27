@@ -118,7 +118,7 @@ sequence([step(plan), fanOut(work, selectItems, { concurrency: 2 }), waitFor(app
 agentLoop({ decide, tools: { search, write }, evaluate, threshold: 0.9, budget: { tokens: 20_000 } });
 ```
 
-Three runnable examples live in [`examples/`](examples/hello/README.md), each started with
+Four runnable examples live in [`examples/`](examples/hello/README.md), each started with
 one command:
 
 | Example | What it shows |
@@ -126,6 +126,7 @@ one command:
 | [hello](examples/hello/README.md) | One workflow, one activity, and the journal printed event by event. |
 | [pipeline](examples/pipeline/README.md) | Plan, fan out two at a time, wait for a human, finish. |
 | [agent](examples/agent/README.md) | An agent that spends 18 tokens against a budget of 15, parks, and resumes on a top-up. |
+| [harness](examples/harness/README.md) | An agent harness: a model worker, tools, a scorer, and a human approval before the result is used. |
 
 ## What is inside
 
@@ -161,7 +162,7 @@ crates/kernel-wasm  wasm-bindgen exports → sdk/ts/sdk/wasm/ (committed)
 crates/traits       Journal / BlobStore / TaskTransport for a future Rust host
 sdk/ts/sdk          @oona/vlo: authoring, journal, host, client, cli
   src/agent         @oona/vlo/agent: decision(), agentLoop(), budgetTopup()
-examples/           hello, pipeline, agent
+examples/           hello, pipeline, agent, harness; recipes/ backs docs/recipes.md
 docs/               user documentation
 ```
 

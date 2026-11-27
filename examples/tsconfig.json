@@ -23,5 +23,5 @@
       "@oona/vlo/agent": ["../sdk/ts/sdk/src/agent/index.ts"]
     }
   },
-  "include": ["hello/**/*", "pipeline/**/*", "agent/**/*"]
+  "include": ["hello/**/*", "pipeline/**/*", "agent/**/*", "harness/**/*", "recipes/**/*", "support.ts", "vitest.config.ts"]
 }

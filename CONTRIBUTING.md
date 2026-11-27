@@ -41,12 +41,13 @@ jobs, and a change must pass all of them.
 1. **Kernel + SDK** — `cargo fmt`, `cargo clippy -D warnings`, `cargo test`, wasm build,
    protocol schema unchanged, typecheck, the full SDK suite on SQLite and on a Postgres 16
    service, the CI-built wasm replays every golden fixture through the TypeScript kernel
-   loader (`VLO_KERNEL_WASM`), SDK build, size budgets
+   loader (`VLO_KERNEL_WASM`), the examples' own tests, SDK build, size budgets
    (`sdk/ts/sdk/scripts/size-gate.mjs`: wasm ≤ 1 MiB, runtime JS reachable from `index.js` + `host.js` ≤ 256 KB, CLI-only JS ≤ 96 KB, and `cli.js` must never be reachable from the runtime).
 2. **Docs** — `cargo doc` with warnings as errors, TypeDoc with `notDocumented` as an
    error, `scripts/check-links.mjs` (every relative Markdown link resolves inside the
-   repository; no page references the monorepo Vlo was extracted from), and a build of the
-   docs site, which fails on a dead link between pages.
+   repository; no page references the monorepo Vlo was extracted from),
+   `scripts/check-snippets.mjs` (every tagged code block is still in its source file), and a
+   build of the docs site, which fails on a dead link between pages.
 3. **Published package** — `scripts/smoke-package.sh` packs `@oona/vlo`, installs the
    tarball into an empty project, imports every entry point and runs `vlo --version`, on
    Node 22 and Node 24. The test suite runs against `src/`, so this is the only gate that
@@ -60,9 +61,9 @@ Run the same gates locally before pushing:
 ```sh
 cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
-pnpm -r typecheck && pnpm test
+pnpm -r typecheck && pnpm test && pnpm --filter @oona/vlo-examples test
 pnpm build && pnpm --filter @oona/vlo size && ./scripts/smoke-package.sh
-pnpm docs:api && pnpm check:links && pnpm docs:build
+pnpm docs:api && pnpm check:links && pnpm check:snippets && pnpm docs:build
 ```
 
 ## The docs site
@@ -77,6 +78,11 @@ GitHub: no frontmatter, relative links between pages.
   `cargo doc --workspace --no-deps` once to have them locally. The site
   configuration, including the sidebar, is `docs/.vitepress/config.mts`; a new page needs a
   sidebar entry there and a row in `docs/README.md`.
+- **Code samples**: a sample worth copying should come from `examples/`, where it is
+  typechecked and tested. Put `<!-- snippet: examples/<path> -->` on the line above the code
+  block and copy the lines from that file; `pnpm check:snippets` fails when the two drift
+  apart. Change the example first, then the page. `examples/recipes/recipes.ts` backs
+  `docs/recipes.md` and is typechecked only.
 - **Publish**: automatic. `.github/workflows/docs.yml` runs `scripts/publish-docs.sh` on
   every push to `main` that touches the docs or the documented source, and pushes the built
   site to the `gh-pages` branch that GitHub Pages serves. It can also be started from the
