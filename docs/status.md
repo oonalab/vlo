@@ -28,7 +28,7 @@ Vlo needs Node 22.5 or later today.
 | Serverless mode | A time-boxed drain plus a cron tick |
 | Workflows | Hand-written reducers, `sequence`, `fanOut`, `fanOutRuns`, `waitFor`, `sleep`, child runs, `continue_as_new` |
 | Signals and signed links | Human approvals, webhooks, deadlines |
-| Agents | `@oona/vlo/agent`: decide, tool, evaluate, with budgets that park |
+| Agents | `@oona/vlo/agent`: decide, tool, evaluate, with budgets that park and tool calls that wait for approval |
 | Usage accounting | Tokens, cost and CPU time banked in the kernel on every event |
 | CLI | `vlo dev`, `vlo serve`, `vlo doctor`, `vlo deploy` |
 | Blob stores | Local files and Google Cloud Storage |

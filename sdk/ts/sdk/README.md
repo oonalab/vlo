@@ -26,7 +26,7 @@ pnpm add @oona/vlo zod          # Node ≥ 22.5
 | Entry | What it gives you |
 |---|---|
 | `@oona/vlo` | authoring: `activity`, `signal`, `defineWorkflow`, `cmd`, `sequence`, `fanOut`, `waitFor`, `defineWorker`, `defineConfig`, `env` |
-| `@oona/vlo/agent` | agent loop: `decision`, `agentLoop`, `budgetTopup` |
+| `@oona/vlo/agent` | agent loop: `decision`, `agentLoop`, `budgetTopup`, `approvalSignal` |
 | `@oona/vlo/host` | runtime: `createHost`, `serve`, `handler`, `createClient`, `drainHost`, `runPullWorker`, journals, blob stores, errors |
 | `@oona/vlo/testing` | `journalConformance`, `fakeClock` |
 | `vlo` (bin) | `vlo dev`, `vlo serve`, `vlo doctor`, `vlo deploy` |
@@ -62,6 +62,8 @@ export default defineWorkflow(
 - `agentLoop()` builds the workflow. It runs until the decision returns `"done"`, the score
   clears the threshold, or the iteration cap is hit.
 - `budgetTopup()` declares the signal that resumes a run parked on a spent budget.
+- `approval: { tools: [...] }` makes the named tools wait for a person's yes or no;
+  `approvalSignal(i)` is the signal that answers call `i`.
 
 Every decision, tool call and score is one journaled event, so an agent continues from its
 last event after a crash. The kernel meters usage on every event, including failed

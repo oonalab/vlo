@@ -39,7 +39,8 @@ export interface Observation {
   score?: number;
 }
 
-export type AgentPhase = "decide" | "tool" | "evaluate" | "parked" | "done";
+/** `approval` is a gated tool call waiting for a person; `parked` is a spent budget waiting for a top-up. */
+export type AgentPhase = "decide" | "approval" | "tool" | "evaluate" | "parked" | "done";
 
 export interface AgentState {
   phase: AgentPhase;
@@ -49,7 +50,7 @@ export interface AgentState {
   memory: Observation[];
   candidate?: Json;
   score?: number;
-  /** The tool dispatched this iteration, so its result can be attributed to it. */
+  /** The tool chosen this iteration (awaiting approval or dispatched), so its result can be attributed to it. */
   pending?: { tool: string; args: Json };
   budget: Budget;
   spent: Spent;

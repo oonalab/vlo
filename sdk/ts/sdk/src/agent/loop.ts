@@ -4,11 +4,13 @@
  * Nothing loops at runtime: every arrow below is one journaled event folded into state, so
  * the run survives a crash mid-thought and replays deterministically. The budget is a
  * reducer decision over the usage the kernel banks on each event — exhaustion parks the run
- * on a top-up signal instead of failing it.
+ * on a top-up signal instead of failing it. A gated tool waits the same way, on a person's
+ * yes or no, before it is dispatched.
  */
 
 import {
   cmd,
+  signalTimeoutStepId,
   WorkflowFailure,
   type Activity,
   type Json,
@@ -17,6 +19,12 @@ import {
   type SignalDef,
   type WorkflowDef,
 } from "../index.ts";
+import {
+  approvalSignal,
+  DEFAULT_APPROVAL_SIGNAL,
+  readApproval,
+  type ApprovalOptions,
+} from "./approval.ts";
 import { budgetTopup, grant, isExhausted, type BudgetTopup } from "./budget.ts";
 import { DONE } from "./decision.ts";
 import {
@@ -44,6 +52,11 @@ export interface AgentLoopOptions {
   threshold?: number | undefined;
   budget: Budget;
   topup?: SignalDef<BudgetTopup> | undefined;
+  /**
+   * Tools that wait for a person's yes before they run. A rejected call becomes an
+   * observation and the decider chooses again. See {@link ApprovalOptions}.
+   */
+  approval?: ApprovalOptions | undefined;
   maxIterations?: number | undefined;
   /** Observations kept in state; older ones are dropped so the checkpoint stays bounded. */
   memoryLimit?: number | undefined;
@@ -53,6 +66,14 @@ export interface AgentLoopOptions {
 type ErasedActivity = Activity<Json, Json>;
 type TaskDone = Extract<ReducerEvent, { type: "task_done" }>;
 type SignalEvent = Extract<ReducerEvent, { type: "signal" }>;
+type TimerEvent = Extract<ReducerEvent, { type: "timer" }>;
+
+interface CompiledApproval {
+  readonly tools: ReadonlySet<string>;
+  readonly name: string;
+  readonly timeoutMs: number | undefined;
+  readonly onTimeout: "reject" | "fail";
+}
 
 interface Compiled {
   readonly decide: ErasedActivity;
@@ -61,6 +82,7 @@ interface Compiled {
   readonly threshold: number | undefined;
   readonly budget: Budget;
   readonly topup: SignalDef<BudgetTopup>;
+  readonly approval: CompiledApproval | undefined;
   readonly maxIterations: number;
   readonly memoryLimit: number;
 }
@@ -71,6 +93,7 @@ const STEP_ID = {
   tool: (i: number) => `tool#${i}`,
   evaluate: (i: number) => `evaluate#${i}`,
   topup: (i: number) => `topup#${i}`,
+  approve: (i: number) => `approve#${i}`,
 } as const;
 
 export function agentLoop(options: AgentLoopOptions): WorkflowDef<AgentState, Json> {
@@ -89,6 +112,7 @@ export function agentLoop(options: AgentLoopOptions): WorkflowDef<AgentState, Js
       started: (state) => decide(cfg, state),
       task_done: (state, event) => onTaskDone(cfg, state, event),
       signal: (state, event) => onSignal(cfg, state, event),
+      timer: (state, event) => onTimer(cfg, state, event),
     },
   };
 }
@@ -104,6 +128,11 @@ function compile(options: AgentLoopOptions): Compiled {
   if (maxIterations < 1) throw new TypeError("agentLoop: maxIterations must be >= 1");
   if (memoryLimit < 1) throw new TypeError("agentLoop: memoryLimit must be >= 1");
 
+  const gated = options.approval?.tools ?? [];
+  for (const name of gated) {
+    if (!tools.has(name)) throw new TypeError(`agentLoop: approval names an unknown tool "${name}"`);
+  }
+
   return {
     decide: erase(options.decide),
     tools,
@@ -111,6 +140,15 @@ function compile(options: AgentLoopOptions): Compiled {
     threshold: options.threshold,
     budget: options.budget,
     topup: options.topup ?? budgetTopup(),
+    approval:
+      options.approval === undefined
+        ? undefined
+        : {
+            tools: new Set(gated),
+            name: options.approval.name ?? DEFAULT_APPROVAL_SIGNAL,
+            timeoutMs: options.approval.timeoutMs,
+            onTimeout: options.approval.onTimeout ?? "reject",
+          },
     maxIterations,
     memoryLimit,
   };
@@ -134,7 +172,9 @@ function decide(cfg: Compiled, state: AgentState): Reduction<AgentState> {
  * already left behind — is folded and ignored, exactly as the `sequence` helper does.
  */
 function onTaskDone(cfg: Compiled, state: AgentState, event: TaskDone): Reduction<AgentState> {
-  if (state.phase === "parked" || state.phase === "done") return [state, []];
+  if (state.phase === "parked" || state.phase === "approval" || state.phase === "done") {
+    return [state, []];
+  }
   if (event.step_id !== STEP_ID[state.phase](state.iteration)) return [state, []];
 
   const at: AgentState = { ...state, spent: spentOf(event) };
@@ -173,9 +213,74 @@ function onDecided(cfg: Compiled, state: AgentState, event: TaskDone): Reduction
     );
   }
 
-  const args = parsed.data;
-  const at: AgentState = { ...state, phase: "tool", pending: { tool: decision.tool, args } };
-  return [at, [cmd.task(target, args, { id: STEP_ID.tool(state.iteration) })]];
+  const pending = { tool: decision.tool, args: parsed.data };
+  if (cfg.approval?.tools.has(decision.tool)) {
+    return askApproval(cfg.approval, { ...state, pending }, decision.rationale);
+  }
+  return dispatch(target, { ...state, pending });
+}
+
+/** Runs the tool the decider picked; `state.pending` already names it. */
+function dispatch(target: ErasedActivity, state: AgentState): Reduction<AgentState> {
+  const at: AgentState = { ...state, phase: "tool" };
+  return [at, [cmd.task(target, at.pending?.args ?? null, { id: STEP_ID.tool(at.iteration) })]];
+}
+
+/**
+ * A gated tool: park on this call's own signal and tell whoever is listening what is being
+ * asked. The run holds no compute while somebody decides.
+ */
+function askApproval(
+  approval: CompiledApproval,
+  state: AgentState,
+  rationale: string | undefined,
+): Reduction<AgentState> {
+  const at: AgentState = { ...state, phase: "approval" };
+  const context = asJson({
+    tool: at.pending?.tool,
+    args: at.pending?.args ?? null,
+    iteration: at.iteration,
+    ...(rationale !== undefined ? { rationale } : {}),
+  });
+  return [
+    at,
+    cmd.awaitHuman(approvalSignal(at.iteration, approval.name), {
+      id: STEP_ID.approve(at.iteration),
+      context,
+      ...(approval.timeoutMs !== undefined ? { timeoutMs: approval.timeoutMs } : {}),
+    }),
+  ];
+}
+
+/** A person answered: run the tool, or tell the decider it was turned down. */
+function onApproval(cfg: Compiled, state: AgentState, event: SignalEvent): Reduction<AgentState> {
+  const at: AgentState = { ...state, spent: spentOf(event) };
+  const pending = at.pending;
+  const target = pending === undefined ? undefined : cfg.tools.get(pending.tool);
+  if (pending === undefined || target === undefined) return advance(cfg, at);
+
+  const reply = readApproval(event.payload);
+  if (reply.approved) return dispatch(target, at);
+
+  const who = reply.by !== undefined ? ` by ${reply.by}` : "";
+  const why = reply.reason !== undefined ? `: ${reply.reason}` : "";
+  return advance(cfg, remember(cfg, at, { ...pending, error: `rejected${who}${why}` }));
+}
+
+/** Nobody answered in time. */
+function onTimer(cfg: Compiled, state: AgentState, event: TimerEvent): Reduction<AgentState> {
+  const waiting = signalTimeoutStepId(STEP_ID.approve(state.iteration));
+  if (state.phase !== "approval" || event.step_id !== waiting) return [state, []];
+
+  const tool = state.pending?.tool ?? "tool";
+  if (cfg.approval?.onTimeout === "fail") {
+    throw new WorkflowFailure(`agent: approval timed out for "${tool}"`, {
+      step_id: STEP_ID.approve(state.iteration),
+    });
+  }
+  const at: AgentState = { ...state, spent: spentOf(event) };
+  const observation = { tool, ...(at.pending !== undefined ? { args: at.pending.args } : {}) };
+  return advance(cfg, remember(cfg, at, { ...observation, error: "approval timed out" }));
 }
 
 function onToolDone(cfg: Compiled, state: AgentState, event: TaskDone): Reduction<AgentState> {
@@ -208,6 +313,9 @@ function onEvaluated(cfg: Compiled, state: AgentState, event: TaskDone): Reducti
 }
 
 function onSignal(cfg: Compiled, state: AgentState, event: SignalEvent): Reduction<AgentState> {
+  if (state.phase === "approval" && event.step_id === STEP_ID.approve(state.iteration)) {
+    return onApproval(cfg, state, event);
+  }
   if (state.phase !== "parked" || event.name !== cfg.topup.name) return [state, []];
 
   const granted = cfg.topup.schema.safeParse(event.payload);

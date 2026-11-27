@@ -35,6 +35,8 @@ stays suspended, so there is no stack to save, no sandbox to run and no code to 
   keeps everything it has already paid for.
 - **Waiting costs nothing.** A run waiting on a person, a webhook or a budget holds no
   compute and no connection.
+- **A risky tool call waits for a person.** Name the tools that need a yes. The agent asks,
+  waits without holding compute, and carries on with the answer.
 - **A human approval is one signed link.** Opening the link changes nothing; confirming it
   resumes the run.
 - **Tools run anywhere, in any language.** A worker is an HTTP endpoint or a polling
@@ -126,7 +128,7 @@ one command:
 | [hello](examples/hello/README.md) | One workflow, one activity, and the journal printed event by event. |
 | [pipeline](examples/pipeline/README.md) | Plan, fan out two at a time, wait for a human, finish. |
 | [agent](examples/agent/README.md) | An agent that spends 18 tokens against a budget of 15, parks, and resumes on a top-up. |
-| [harness](examples/harness/README.md) | An agent harness: a model worker, tools, a scorer, and a human approval before the result is used. |
+| [harness](examples/harness/README.md) | An agent harness: a model worker, tools, a scorer, and a tool that waits for a person's approval. |
 
 ## What is inside
 

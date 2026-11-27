@@ -8,6 +8,8 @@ a budget and waits for people. It ships inside `@oona/vlo`.
   continues from its last event.
 - **A spent budget parks the run instead of failing it.** The kernel banks usage on every
   event, including failed attempts. The run waits for a top-up and keeps what it has done.
+- **A risky tool waits for a person.** A gated tool call parks the run until someone says
+  yes or no. A no becomes an observation, not a failure.
 - **Bad model output is an ordinary outcome.** An unknown tool or invalid arguments becomes
   an observation, and the model decides again.
 
@@ -22,6 +24,9 @@ pnpm add @oona/vlo zod
 flowchart TD
   S([start: goal, tools, budget]) --> D["decide#i"]
   D -->|tool| T["tool#i"]
+  D -->|gated tool| A["awaiting_signal on approve#i"]
+  A -->|approved| T
+  A -->|"rejected or timed out"| B
   D -->|done| F([complete])
   T --> E["evaluate#i"]
   E -->|"score ≥ threshold"| F
@@ -58,6 +63,7 @@ Returns a `WorkflowDef<AgentState, Json>`; hand it to `defineWorkflow`.
 | `threshold` | none | Score at or above which the run completes. Without one only `decide` can finish. |
 | `budget` | required | `{ tokens?, costMicroUsd?, steps? }`. An absent ceiling never binds. |
 | `topup` | `budgetTopup()` | The signal a parked agent waits on. |
+| `approval` | none | `{ tools, name?, timeoutMs?, onTimeout? }`. Tools that wait for a person before they run. See [Approving tool calls](#approving-tool-calls). |
 | `maxIterations` | `50` | Completes with `exhausted: true` when reached. |
 | `memoryLimit` | `20` | Observations kept in state; older ones are dropped. |
 
@@ -65,6 +71,11 @@ Returns a `WorkflowDef<AgentState, Json>`; hand it to `defineWorkflow`.
 
 A `SignalDef<{ tokens?, costMicroUsd?, steps? }>`. Each field is added to the matching
 ceiling; a ceiling that was never set stays unbounded.
+
+### `approvalSignal(iteration, name = "agent.tool_approval")`
+
+The `SignalDef<{ approved?, reason?, by? }>` that the gated call of `iteration` waits on. Its
+name is `<name>:<iteration>`. Pass it to `client.signal` or `client.signalLink`.
 
 ## Example
 
@@ -140,12 +151,14 @@ the host (export them from a module the config loads, or pass `activities` / `si
 
 ## One iteration
 
-Step ids are `decide#i`, `tool#i`, `evaluate#i` and `topup#i`, where `i` is the iteration.
+Step ids are `decide#i`, `approve#i`, `tool#i`, `evaluate#i` and `topup#i`, where `i` is the
+iteration.
 
 1. **decide** — `cmd.task(decide, { goal, memory, candidate, score }, { id: "decide#i" })`.
    `candidate` and `score` are the last tool output and its score, or `null`.
 2. On `done`: complete with `final ?? candidate`. Otherwise validate `args` against the
-   chosen tool's input schema and dispatch `tool#i`.
+   chosen tool's input schema and dispatch `tool#i`, or wait on `approve#i` first when the
+   tool is gated.
 3. **tool** — the output becomes `candidate` and an observation
    `{ tool, args, output }` in `memory`. With no `evaluate`, go to step 5.
 4. **evaluate** — `cmd.task(evaluate, { goal, candidate }, { id: "evaluate#i" })`. The
@@ -168,6 +181,52 @@ The decider is a model, so bad output is an ordinary outcome, not a run failure:
 | `decide` output has no string `tool` | `WorkflowFailure` — the run fails. |
 | `evaluate` output has no numeric score | `WorkflowFailure` — the run fails. |
 | A result for a step the loop is not waiting for | Ignored: same state, no commands. |
+
+## Approving tool calls
+
+```ts
+agentLoop({ decide, tools: { search, publish }, budget, approval: { tools: ["publish"], timeoutMs: 86_400_000 } });
+```
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `tools` | required | Names of the gated tools. Each must be a key of `tools`; an unknown name throws at definition time. |
+| `name` | `"agent.tool_approval"` | Prefix of the signal name. |
+| `timeoutMs` | none | How long to wait. Without one the run waits until somebody answers. |
+| `onTimeout` | `"reject"` | `"reject"` records `approval timed out` as an observation and decides again. `"fail"` fails the run. |
+
+When `decide` picks a gated tool with valid arguments, the reducer does not dispatch it. It
+emits `cmd.awaitHuman(approvalSignal(i, name), { id: "approve#i", timeoutMs, context })`,
+where `context` is `{ tool, args, iteration, rationale? }`. The run's status becomes
+`awaiting_signal` and it holds no compute.
+
+```ts
+import { approvalSignal } from "@oona/vlo/agent";
+
+await client.signal(runId, approvalSignal(3), { approved: true, by: "dana" });
+await client.signal(runId, approvalSignal(3), { approved: false, reason: "wrong audience" });
+```
+
+| Reply | Effect |
+| --- | --- |
+| `{ approved: true }`, `{}` or no payload | The tool is dispatched as `tool#i`. An empty reply approves so that a signed link's confirmation form is enough. |
+| `{ approved: false, reason?, by? }` | Observation `{ tool, args, error: "rejected by …: …" }`; advance and decide again. |
+| A payload that is not an approval | Treated as a rejection: `rejected: the approval reply was not valid`. |
+| Nothing before `timeoutMs` | Per `onTimeout`. |
+
+Things to know:
+
+- **Each call has its own signal**, `<name>:<i>`. A duplicate reply, a late reply or a signed
+  link for one call can never approve another. The names are not registered on the host, so
+  there is nothing to add to `signals`.
+- **A rejection or a timeout ends the iteration.** It counts against `budget.steps` and
+  `maxIterations`, so an agent cannot ask forever.
+- **Finding the open request.** The wait is the event with step id `approve#i` and status
+  `awaiting_signal`; the `human` emit on the event stream carries the context.
+- **The reviewer cannot change the arguments.** The call runs as the decider made it, or not
+  at all.
+- **A parked budget and a pending approval are both `awaiting_signal`.** Tell them apart by
+  the open step id: `topup#i` or `approve#i`.
 
 ## Parking and top-ups
 
@@ -195,7 +254,7 @@ add budget. See [signals-and-humans.md](./signals-and-humans.md).
 `AgentState` (journaled as the run's state):
 
 ```ts
-{ phase: "decide" | "tool" | "evaluate" | "parked" | "done", goal, iteration, memory: Observation[],
+{ phase: "decide" | "approval" | "tool" | "evaluate" | "parked" | "done", goal, iteration, memory: Observation[],
   candidate?, score?, pending?: { tool, args }, budget, spent: { cpu_ms, tokens, cost_micro_usd } }
 ```
 
