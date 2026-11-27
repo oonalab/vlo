@@ -1,0 +1,2 @@
+createSrcSidebar('[["vlo_kernel",["",[],["api.rs","canonical.rs","classify.rs","commands.rs","error.rs","events.rs","guards.rs","hash.rs","ids.rs","lib.rs","lifecycle.rs","prepare.rs","reduce.rs","refold.rs","retry.rs","step_machine.rs","steps.rs","validate.rs"]]],["vlo_kernel_wasm",["",[],["lib.rs"]]],["vlo_traits",["",[],["lib.rs"]]],["vlo_types",["",[],["command.rs","envelope.rs","kernel_state.rs","lib.rs","protocol.rs","retry.rs","transition.rs"]]]]');
+//{"start":19,"fragment_lengths":[245,39,34,119]}

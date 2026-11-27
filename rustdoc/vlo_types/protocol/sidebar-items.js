@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Prepared","ReducerEvent"],"struct":["DeriveIdsInput","DeriveIdsOutput","HashAtSeq","KernelError","KernelResult","KernelVersion","PrepareEventInput","ReduceStepInput","RefoldCheckInput","RefoldCheckOutput","StateHashInput","StateHashOutput","ValidateEventOutput"]};

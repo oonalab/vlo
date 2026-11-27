@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CANCEL_STEP_ID","COMPLETE_STEP_ID","CONTINUE_STEP_ID","FAIL_STEP_ID","NONDETERMINISM_STEP_ID","TIMEOUT_SUFFIX"],"enum":["Class"],"fn":["classify","timeout_owner","timeout_step_id"]};

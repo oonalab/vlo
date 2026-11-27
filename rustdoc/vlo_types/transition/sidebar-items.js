@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Completion","ContinueAsNew","Emit","NewSpawn","NewTask","NewTimer","RunPatch","RunRef","SignalWait","TaskUpdate","Transition"]};

@@ -1,0 +1,1 @@
+import{_ as t,o,c as s,a2 as d}from"./chunks/framework.yZB1U4Nl.js";const k=JSON.parse('{"title":"Journal","description":"","frontmatter":{},"headers":[],"relativePath":"journal.md","filePath":"journal.md"}'),a={name:"journal.md"};function i(c,e,n,r,l,h){return o(),s("div",null,[...e[0]||(e[0]=[d("",42)])])}const u=t(a,[["render",i]]);export{k as __pageData,u as default};

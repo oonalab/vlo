@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["INLINE_LIMIT_BYTES","PROTOCOL_VERSION"],"mod":["command","envelope","kernel_state","protocol","retry","transition"]};

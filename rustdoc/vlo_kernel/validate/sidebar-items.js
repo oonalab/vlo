@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["BLOB_REF_PREFIX","RANDOM_HEX_LEN"],"fn":["is_random_hex","optional_payload_value","payload_value","validate_event"]};
