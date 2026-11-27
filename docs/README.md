@@ -39,11 +39,15 @@ SDK and CLI are TypeScript on Node.
 
 ## Generated API reference
 
-- **TypeScript** (`@oona/vlo` and its `/host`, `/agent` and `/testing` entries): TypeDoc renders every exported symbol into
-  `docs/api/`. Build it with `pnpm --filter @oona/vlo docs:api`; the output is produced in CI and
-  is not committed, so you will not find it in a checkout.
-- **Rust** (`vlo-types`, `vlo-kernel`, `vlo-kernel-wasm`, `vlo-traits`): run `cargo doc
-  --workspace --no-deps --open` from the repository root.
+Both are published with these pages at <https://oonalab.github.io/vlo/>.
+
+- **TypeScript** (`@oona/vlo` and its `/host`, `/agent` and `/testing` entries):
+  [oonalab.github.io/vlo/api/](https://oonalab.github.io/vlo/api/). TypeDoc writes a
+  page for every exported symbol into `docs/api/`. Build it locally with `pnpm --filter @oona/vlo docs:api`;
+  the output is not committed, so you will not find it in a checkout.
+- **Rust** (`vlo-types`, `vlo-kernel`, `vlo-kernel-wasm`, `vlo-traits`):
+  [oonalab.github.io/vlo/rustdoc/](https://oonalab.github.io/vlo/rustdoc/). Build it locally
+  with `cargo doc --workspace --no-deps --open` from the repository root.
 
 ## Conventions used in these pages
 

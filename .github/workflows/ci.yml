@@ -168,6 +168,11 @@ jobs:
       - name: Markdown links
         run: node scripts/check-links.mjs
 
+      # The site docs.yml publishes from main. Building it here fails a pull request on a
+      # dead link between pages before it can reach the published site.
+      - name: Docs site
+        run: pnpm docs:build
+
       - name: Upload API docs
         uses: actions/upload-artifact@v4
         with:

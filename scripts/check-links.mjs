@@ -5,7 +5,7 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SKIP_DIRS = new Set(["node_modules", "target", "dist", "api", ".vlo", ".git", ".claude"]);
+const SKIP_DIRS = new Set(["node_modules", "target", "dist", "api", ".vlo", ".git", ".claude", ".vitepress"]);
 const FORBIDDEN = [/docs\/64/, /\bOrbi\b/];
 const LINK = /!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 const REF_DEF = /^\s*\[[^\]]+\]:\s*(\S+)/gm;

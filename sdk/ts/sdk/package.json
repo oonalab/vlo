@@ -10,7 +10,7 @@
     "url": "git+https://github.com/oonalab/vlo.git",
     "directory": "sdk/ts/sdk"
   },
-  "homepage": "https://github.com/oonalab/vlo#readme",
+  "homepage": "https://oonalab.github.io/vlo/",
   "bugs": "https://github.com/oonalab/vlo/issues",
   "keywords": [
     "workflow",
@@ -88,6 +88,8 @@
     "tsdown": "^0.23.0",
     "tsx": "^4.19.0",
     "typedoc": "^0.28.20",
+    "typedoc-plugin-markdown": "^4.14.1",
+    "typedoc-vitepress-theme": "^1.1.4",
     "typescript": "^5.7.0",
     "vitest": "^4.1.9",
     "zod": "^4.0.0"

@@ -45,7 +45,8 @@ jobs, and a change must pass all of them.
    (`sdk/ts/sdk/scripts/size-gate.mjs`: wasm ≤ 1 MiB, runtime JS reachable from `index.js` + `host.js` ≤ 256 KB, CLI-only JS ≤ 96 KB, and `cli.js` must never be reachable from the runtime).
 2. **Docs** — `cargo doc` with warnings as errors, TypeDoc with `notDocumented` as an
    error, `scripts/check-links.mjs` (every relative Markdown link resolves inside the
-   repository; no page references the monorepo Vlo was extracted from).
+   repository; no page references the monorepo Vlo was extracted from), and a build of the
+   docs site, which fails on a dead link between pages.
 3. **Published package** — `scripts/smoke-package.sh` packs `@oona/vlo`, installs the
    tarball into an empty project, imports every entry point and runs `vlo --version`, on
    Node 22 and Node 24. The test suite runs against `src/`, so this is the only gate that
@@ -61,8 +62,28 @@ cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 pnpm -r typecheck && pnpm test
 pnpm build && pnpm --filter @oona/vlo size && ./scripts/smoke-package.sh
-pnpm docs:api && pnpm check:links
+pnpm docs:api && pnpm check:links && pnpm docs:build
 ```
+
+## The docs site
+
+The pages in `docs/` are published at <https://oonalab.github.io/vlo/> together with the
+TypeScript and Rust API references. They are plain Markdown and must keep reading well on
+GitHub: no frontmatter, relative links between pages.
+
+- **Preview**: `pnpm docs:dev` serves the site locally and reloads on save. The TypeScript
+  API pages are Markdown that TypeDoc generates into `docs/api/`, and the Rust API is
+  rustdoc's HTML; neither is committed, so run `pnpm docs:api` and
+  `cargo doc --workspace --no-deps` once to have them locally. The site
+  configuration, including the sidebar, is `docs/.vitepress/config.mts`; a new page needs a
+  sidebar entry there and a row in `docs/README.md`.
+- **Publish**: automatic. `.github/workflows/docs.yml` runs `scripts/publish-docs.sh` on
+  every push to `main` that touches the docs or the documented source, and pushes the built
+  site to the `gh-pages` branch that GitHub Pages serves. It can also be started from the
+  Actions tab.
+- **Fallback**: if Actions is unavailable, a maintainer with push access runs
+  `pnpm docs:publish` on an up-to-date `main`. It is the same script and the same push.
+  `./scripts/publish-docs.sh --dry-run` builds everything without pushing.
 
 ## Making a change
 

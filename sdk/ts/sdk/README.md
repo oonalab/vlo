@@ -44,10 +44,11 @@ you hand to `defineWorkflow`.
 
 ## Documentation
 
-- [Getting started](https://github.com/oonalab/vlo/blob/main/docs/getting-started.md)
-- [Concepts](https://github.com/oonalab/vlo/blob/main/docs/concepts.md)
-- [Agents](https://github.com/oonalab/vlo/blob/main/docs/agents.md)
-- [Full index](https://github.com/oonalab/vlo/blob/main/docs/README.md)
+- [Getting started](https://oonalab.github.io/vlo/getting-started)
+- [Concepts](https://oonalab.github.io/vlo/concepts)
+- [Agents](https://oonalab.github.io/vlo/agents)
+- [Full index](https://oonalab.github.io/vlo/)
+- [API reference](https://oonalab.github.io/vlo/api/)
 - [Examples](https://github.com/oonalab/vlo/tree/main/examples): the smallest program, a
   fan-out pipeline with a human approval, and a budgeted agent loop.
 
