@@ -97,6 +97,13 @@ The run parks. Its status becomes `awaiting_signal`, it keeps its memory and its
 result, and it resumes when someone sends a top-up. It does not fail and it does not keep
 spending. See [agents.md](./agents.md#parking-and-top-ups).
 
+### Can an agent ask a person before it does something risky?
+
+Yes. Name the tools that need approval in `agentLoop({ approval })`. When the model picks
+one, the run waits without holding compute until someone approves or rejects it, by API
+call or by a signed link. A rejection goes back to the model as an observation. See
+[agents.md](./agents.md#approving-tool-calls).
+
 ### How long can a task run?
 
 As long as it needs. A task is held by a lease that the worker renews, so there is no

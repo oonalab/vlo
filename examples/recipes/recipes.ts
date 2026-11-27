@@ -20,7 +20,7 @@ import {
   withRetryInput,
   type Reduction,
 } from "@oona/vlo";
-import { agentLoop, budgetTopup, decision } from "@oona/vlo/agent";
+import { agentLoop, approvalSignal, budgetTopup, decision } from "@oona/vlo/agent";
 import { createClient, runPullWorker } from "@oona/vlo/host";
 import { z } from "zod";
 
@@ -173,4 +173,23 @@ export function compact(state: { cursor: number }): Reduction<{ cursor: number }
 
 export async function stop() {
   await client.cancel(runId);
+}
+
+// ── Approve a tool call ─────────────────────────────────────────────────────────────────
+
+export const careful = agentLoop({
+  decide,
+  tools,
+  budget: { tokens: 50_000 },
+  approval: { tools: ["search"], timeoutMs: 86_400_000 },
+});
+
+export async function answer() {
+  await client.signal(runId, approvalSignal(3), { approved: true, by: "dana" });
+  await client.signal(runId, approvalSignal(3), { approved: false, reason: "wrong audience" });
+}
+
+export async function answerByLink() {
+  const link = await client.signalLink(runId, approvalSignal(3));
+  await sendEmail({ to: reviewer, body: `The agent wants to search. Approve: ${link.url}` });
 }

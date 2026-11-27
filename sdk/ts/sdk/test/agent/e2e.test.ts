@@ -9,9 +9,9 @@
 import { defineWorkflow } from "../../src/index.ts";
 import { createClient, createHost, defineWorker, type Host } from "../../src/host.ts";
 import { afterEach, describe, expect, it } from "vitest";
-import { agentLoop, type AgentResult } from "../../src/agent/index.ts";
+import { agentLoop, approvalSignal, type AgentResult } from "../../src/agent/index.ts";
 import { decide, draft, evaluate, topup } from "./example.ts";
-import { sandbox, type Sandbox } from "../support.ts";
+import { sandbox, sleep, until, type Sandbox } from "../support.ts";
 
 /** Tokens each handler reports, small enough that one cycle overruns the budget below. */
 const TOKENS = { decide: 10, draft: 5, evaluate: 3 };
@@ -139,5 +139,139 @@ describe("agent e2e", () => {
       "evaluate#1",
       "decide#2",
     ]);
+  });
+
+  it("waits for a person before a gated tool, and routes around a rejection", async () => {
+    const gated = defineWorkflow(
+      "agent.gated",
+      agentLoop({ decide, tools: { draft }, budget: {}, approval: { tools: ["draft"] }, maxIterations: 5 }),
+    );
+    const box = await sandbox();
+    let drafts = 0;
+    const host = createHost({
+      journal: box.journalUrl,
+      blob: box.blobUrl,
+      workflows: [gated],
+      activities: [decide, draft],
+      workers: [
+        defineWorker({
+          "agent.decide": (input: { memory: unknown[] }) =>
+            input.memory.length >= 2
+              ? { tool: "done", rationale: "one draft got through" }
+              : { tool: "draft", args: { topic: `pass ${input.memory.length}` } },
+          "agent.draft": (input: { topic: string }) => {
+            drafts++;
+            return { text: `draft of ${input.topic}` };
+          },
+        }),
+      ],
+      dispatcher: { tickMs: 10 },
+    });
+    open.push({ host, box });
+    await host.start();
+    const client = createClient({ fetch: host.fetch });
+
+    const started = await client.start(gated, { goal: "write a headline" });
+    await client.waitFor(started.run_id, "awaiting_signal");
+    expect(drafts).toBe(0);
+
+    // No to the first call: nothing runs, and the decider is told why.
+    const no = await client.signal(started.run_id, approvalSignal(0), { approved: false, reason: "not yet" });
+    expect(no.delivered).toBe(true);
+
+    // The approval for call 0 cannot be replayed onto call 1: it has its own signal.
+    await until(async () => {
+      const events = await client.events(started.run_id);
+      return events.some((event) => event.step_id === "approve#1") ? true : null;
+    });
+    expect(drafts).toBe(0);
+    await client.signal(started.run_id, approvalSignal(1), {});
+
+    const completed = await client.waitFor(started.run_id, "completed");
+    const result = completed.output as unknown as AgentResult;
+    expect(drafts).toBe(1);
+    expect(result.candidate).toEqual({ text: "draft of pass 1" });
+  });
+
+  /** An agent whose only tool is gated, with a deadline short enough to miss in a test. */
+  async function startGated(onTimeout: "reject" | "fail", name?: string) {
+    const gated = defineWorkflow(
+      `agent.deadline.${onTimeout}.${name ?? "default"}`,
+      agentLoop({
+        decide,
+        tools: { draft },
+        budget: {},
+        approval: { tools: ["draft"], timeoutMs: 150, onTimeout, ...(name !== undefined ? { name } : {}) },
+        maxIterations: 5,
+      }),
+    );
+    const box = await sandbox();
+    let drafts = 0;
+    const host = createHost({
+      journal: box.journalUrl,
+      blob: box.blobUrl,
+      workflows: [gated],
+      activities: [decide, draft],
+      workers: [
+        defineWorker({
+          "agent.decide": (input: { memory: { error?: string }[] }) =>
+            input.memory.length >= 1
+              ? { tool: "done", final: { told: input.memory[0]?.error ?? null } }
+              : { tool: "draft", args: { topic: "pass 0" } },
+          "agent.draft": (input: { topic: string }) => {
+            drafts++;
+            return { text: `draft of ${input.topic}` };
+          },
+        }),
+      ],
+      dispatcher: { tickMs: 10 },
+    });
+    open.push({ host, box });
+    await host.start();
+    const client = createClient({ fetch: host.fetch });
+    const started = await client.start(gated, { goal: "write a headline" });
+    return { client, runId: started.run_id, drafts: () => drafts };
+  }
+
+  it("carries on without the tool when nobody answers before the deadline", async () => {
+    const { client, runId, drafts } = await startGated("reject");
+
+    // Nobody signals. The real timer fires and the decider is told.
+    const completed = await client.waitFor(runId, "completed");
+
+    expect((completed.output as unknown as AgentResult).candidate).toEqual({ told: "approval timed out" });
+    expect(drafts()).toBe(0);
+    const events = await client.events(runId);
+    expect(events.some((event) => event.step_id === "approve#0:timeout" && event.status === "succeeded")).toBe(true);
+    // An answer after the deadline reaches nobody.
+    const late = await client.signal(runId, approvalSignal(0), {});
+    expect(late.delivered).toBe(false);
+  });
+
+  it("fails the run on a missed deadline when configured to", async () => {
+    const { client, runId, drafts } = await startGated("fail");
+
+    const failed = await client.waitFor(runId, "failed");
+
+    expect(failed.error).toContain('approval timed out for "draft"');
+    expect(drafts()).toBe(0);
+  });
+
+  it("is answered on a custom signal name, and an answer in time cancels the deadline", async () => {
+    const { client, runId, drafts } = await startGated("fail", "ops.sign_off");
+    await client.waitFor(runId, "awaiting_signal");
+
+    // The default name is not what this run waits on.
+    expect((await client.signal(runId, approvalSignal(0), {})).delivered).toBe(false);
+    expect((await client.signal(runId, approvalSignal(0, "ops.sign_off"), {})).delivered).toBe(true);
+
+    // `onTimeout: "fail"` would fail the run if the deadline still fired; it completes instead.
+    const completed = await client.waitFor(runId, "completed");
+    expect(drafts()).toBe(1);
+    expect(completed.status).toBe("completed");
+    // Well past the deadline, the timer has still not fired: the answer retired it.
+    await sleep(400);
+    const timer = (await client.events(runId)).filter((event) => event.step_id === "approve#0:timeout");
+    expect(timer.map((event) => event.status)).toEqual(["scheduled"]);
   });
 });

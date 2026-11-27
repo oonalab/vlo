@@ -9,6 +9,13 @@
 export { decision, DONE, type DecisionOptions } from "./decision.ts";
 
 export {
+  approvalSignal,
+  DEFAULT_APPROVAL_SIGNAL,
+  type ApprovalOptions,
+  type ToolApproval,
+} from "./approval.ts";
+
+export {
   budgetTopup,
   DEFAULT_TOPUP_SIGNAL,
   type BudgetTopup,

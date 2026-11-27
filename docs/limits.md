@@ -26,7 +26,7 @@ the runtime imports:
 | Artifact | Budget | Today |
 | --- | --- | --- |
 | `wasm/vlo_kernel_bg.wasm` | 1 MiB (1 048 576 bytes); also enforced by `scripts/build-kernel.sh` and warned on by `vlo doctor` | 297 573 bytes (298 KB), built with `opt-level = "z"`, fat LTO, `panic = "abort"`, `strip`, `wasm-opt` off |
-| Runtime JS: every `dist/*.js` chunk reachable from `index.js` and `host.js` (what `@oona/vlo` and `@oona/vlo/host` load) | 256 KB (262 144 bytes) | ~196 KB |
+| Runtime JS: every `dist/*.js` chunk reachable from `index.js` and `host.js` (what `@oona/vlo` and `@oona/vlo/host` load) | 256 KB (262 144 bytes) | ~207 KB |
 | CLI JS: `cli.js` and the chunks only it reaches | 96 KB (98 304 bytes) | ~54 KB |
 
 The CI gate on the kernel is semantic, not byte-identical: the committed wasm and a

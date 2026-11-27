@@ -8,6 +8,7 @@ TypeScript on this page is typechecked in CI: it is copied from
 | --- | --- |
 | Wait for a person | [Wait for an approval, with a deadline](#wait-for-an-approval-with-a-deadline) |
 | Approve from an email | [Send an approval link](#send-an-approval-link) |
+| Make an agent ask before acting | [Approve a tool call](#approve-a-tool-call) |
 | Limit what an agent spends | [Cap an agent's spend](#cap-an-agents-spend) |
 | Limit what a pipeline spends | [Stop a pipeline when it has spent too much](#stop-a-pipeline-when-it-has-spent-too-much) |
 | Call a flaky model or API | [Retry a flaky call](#retry-a-flaky-call) |
@@ -51,6 +52,41 @@ Opening the link shows a confirmation form and changes nothing, so mail scanners
 approve by accident. A browser form sends no payload, so give a signal meant for links a
 schema that accepts an empty one (optional fields, or `z.unknown()`). See
 [signals-and-humans.md](./signals-and-humans.md#signed-links).
+
+## Approve a tool call
+
+Name the tools that need a person's yes:
+
+<!-- snippet: examples/recipes/recipes.ts -->
+```ts
+export const careful = agentLoop({
+  decide,
+  tools,
+  budget: { tokens: 50_000 },
+  approval: { tools: ["search"], timeoutMs: 86_400_000 },
+});
+```
+
+When the model picks one, the run waits and holds no compute. Each call waits on its own
+signal, named after its iteration; the wait's step id is `approve#<i>`. Answer it either
+way:
+
+<!-- snippet: examples/recipes/recipes.ts -->
+```ts
+await client.signal(runId, approvalSignal(3), { approved: true, by: "dana" });
+await client.signal(runId, approvalSignal(3), { approved: false, reason: "wrong audience" });
+```
+
+A rejection becomes an observation and the model decides again. To approve from an email,
+mint a link for that one call:
+
+<!-- snippet: examples/recipes/recipes.ts -->
+```ts
+const link = await client.signalLink(runId, approvalSignal(3));
+await sendEmail({ to: reviewer, body: `The agent wants to search. Approve: ${link.url}` });
+```
+
+See [agents.md](./agents.md#approving-tool-calls).
 
 ## Cap an agent's spend
 

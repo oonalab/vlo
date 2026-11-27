@@ -11,7 +11,7 @@ export interface DecideInput {
 }
 
 export interface ModelDecision {
-  tool: "search" | "write" | "done";
+  tool: "search" | "write" | "publish" | "done";
   args?: unknown;
   why: string;
   tokens: number;
@@ -29,7 +29,12 @@ export async function decideNext(input: DecideInput): Promise<ModelDecision> {
     const results = (input.candidate as { results?: string[] } | null)?.results ?? [];
     return { tool: "write", args: { notes: results.join("; ") }, why: "enough to write", ...usage };
   }
-  return { tool: "done", why: "the report is written", ...usage };
+  if (input.memory.length === 2) {
+    const text = (input.candidate as { text?: string } | null)?.text ?? "";
+    return { tool: "publish", args: { text }, why: "the report is ready to go out", ...usage };
+  }
+  // Published, or told not to: either way there is nothing left to do.
+  return { tool: "done", why: "finished", ...usage };
 }
 
 /** The model turns notes into prose. */
@@ -42,8 +47,14 @@ export async function webSearch(query: string): Promise<string[]> {
   return [`what ${query} is`, `why ${query} matters`];
 }
 
-/** Scores a candidate against the goal, 0 to 1. */
+/** Publishes the report somewhere people can read it. */
+export async function post(text: string): Promise<string> {
+  return `https://example.com/posts/${text.length}`;
+}
+
+/** Scores a candidate against the goal, 0 to 1: published beats written beats gathered. */
 export async function grade(_goal: unknown, candidate: unknown): Promise<number> {
-  const text = (candidate as { text?: string } | null)?.text ?? "";
-  return text.includes("report") ? 0.95 : 0.3;
+  const seen = candidate as { url?: string; text?: string } | null;
+  if (seen?.url !== undefined) return 0.95;
+  return seen?.text !== undefined ? 0.6 : 0.3;
 }
