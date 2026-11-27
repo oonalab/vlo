@@ -1,5 +1,7 @@
 # Vlo
 
+[![npm version](https://img.shields.io/npm/v/@oona/vlo)](https://www.npmjs.com/package/@oona/vlo)
+
 A durable execution engine where a workflow is a pure reducer:
 
 ```
