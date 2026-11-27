@@ -76,7 +76,7 @@ export interface WorkerOptions {
  *
  * @example
  * ```ts
- * import { defineWorker } from "@vlo/sdk";
+ * import { defineWorker } from "@oona/vlo";
  *
  * export default defineWorker(
  *   {

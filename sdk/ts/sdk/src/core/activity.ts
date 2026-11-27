@@ -146,7 +146,7 @@ export interface SignalDef<T = unknown> {
  * @example
  * ```ts
  * import { z } from "zod";
- * import { activity } from "@vlo/sdk";
+ * import { activity } from "@oona/vlo";
  *
  * export const work = activity("example.work", {
  *   input: z.object({ item: z.string() }),
@@ -202,7 +202,7 @@ export function activity<I extends z.ZodType, O extends z.ZodType>(
  * @example
  * ```ts
  * import { z } from "zod";
- * import { signal } from "@vlo/sdk";
+ * import { signal } from "@oona/vlo";
  *
  * export const approve = signal("example.approve", z.object({ by: z.string() }));
  * ```

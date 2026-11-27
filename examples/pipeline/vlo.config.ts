@@ -1,4 +1,4 @@
-import { defineConfig } from "@vlo/sdk";
+import { defineConfig } from "@oona/vlo";
 
 export default defineConfig({
   workflows: ["*.workflow.ts"],

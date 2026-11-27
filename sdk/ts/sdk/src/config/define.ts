@@ -27,7 +27,7 @@ export type Ref = string | EnvRef;
  *
  * @example
  * ```ts
- * import { defineConfig, env } from "@vlo/sdk";
+ * import { defineConfig, env } from "@oona/vlo";
  *
  * export default defineConfig({
  *   workflows: ["*.workflow.ts"],
@@ -147,7 +147,7 @@ export interface VloConfig {
  *
  * @example
  * ```ts
- * import { defineConfig, env } from "@vlo/sdk";
+ * import { defineConfig, env } from "@oona/vlo";
  *
  * export default defineConfig({
  *   workflows: ["./workflows/*.workflow.ts"],

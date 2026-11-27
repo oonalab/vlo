@@ -5,7 +5,7 @@ TypeScript module the CLI imports; `defineConfig` gives you types and `env()` ke
 out of the file.
 
 ```ts
-import { defineConfig, env } from "@vlo/sdk";
+import { defineConfig, env } from "@oona/vlo";
 
 export default defineConfig({
   workflows: ["src/**/*.workflow.ts"],
@@ -152,6 +152,6 @@ Precedence:
 Loading a profile yields the options `serve()` / `createHost()` take: `journal`, `blob`,
 `workflows`, `workers`, `activities`, `signals`, `queues`, `auth`, `roles`, `dispatcher`,
 `publicUrl`, `port`. You can skip the config file entirely and call
-`serve({ … })` from `@vlo/sdk/host` yourself with the same fields plus `basePath`,
+`serve({ … })` from `@oona/vlo/host` yourself with the same fields plus `basePath`,
 `streamPollMs`, `namespace`, `hostname` and `domains` (values from `defineDomain`, flattened
 onto the four registries; `workflows` becomes optional when a domain supplies them).

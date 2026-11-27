@@ -1,12 +1,12 @@
 # Agents
 
-`@vlo/agent` builds a decide → tool → evaluate loop as a pure reducer. Nothing loops at
+`@oona/vlo/agent` ships inside `@oona/vlo` and builds a decide → tool → evaluate loop as a pure reducer. Nothing loops at
 runtime: every arrow is one journaled event folded into state, so an agent survives a crash
 mid-thought and replays deterministically. The budget is a reducer decision over the usage
 the kernel banks on each event; exhaustion parks the run on a signal instead of failing it.
 
 ```sh
-pnpm add @vlo/agent @vlo/sdk zod
+pnpm add @oona/vlo zod
 ```
 
 ```mermaid
@@ -62,8 +62,8 @@ ceiling; a ceiling that was never set stays unbounded.
 ```ts
 // agent.ts
 import { z } from "zod";
-import { activity, defineWorkflow } from "@vlo/sdk";
-import { agentLoop, budgetTopup, decision } from "@vlo/agent";
+import { activity, defineWorkflow } from "@oona/vlo";
+import { agentLoop, budgetTopup, decision } from "@oona/vlo/agent";
 
 export const draft = activity("agent.draft", {
   input: z.object({ topic: z.string() }),
@@ -109,7 +109,7 @@ export default defineWorkflow(
 The worker is where the model lives. Report usage so the budget means something:
 
 ```ts
-import { defineWorker } from "@vlo/sdk";
+import { defineWorker } from "@oona/vlo";
 
 export default defineWorker({
   "agent.decide": async (input: { goal: unknown; memory: unknown[] }, ctx) => {
@@ -200,6 +200,6 @@ add budget. See [signals-and-humans.md](./signals-and-humans.md).
 `iterations` counts the cycle in flight when the loop finished on a verdict; on
 `maxIterations` it is the ceiling itself.
 
-Reference: [`../sdk/ts/agent/test/example.ts`](../sdk/ts/agent/test/example.ts) and
-[`../sdk/ts/agent/test/e2e.test.ts`](../sdk/ts/agent/test/e2e.test.ts), and the runnable
+Reference: [`../sdk/ts/sdk/test/agent/example.ts`](../sdk/ts/sdk/test/agent/example.ts) and
+[`../sdk/ts/sdk/test/agent/e2e.test.ts`](../sdk/ts/sdk/test/agent/e2e.test.ts), and the runnable
 [`../examples/agent/`](../examples/agent/).

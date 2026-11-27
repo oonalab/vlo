@@ -140,7 +140,7 @@ const NOT_STARTED: Kernel = new Proxy({} as Kernel, {
  *
  * @example
  * ```ts
- * import { createClient, createHost, defineWorker } from "@vlo/sdk/host";
+ * import { createClient, createHost, defineWorker } from "@oona/vlo/host";
  *
  * const host = createHost({
  *   journal: "sqlite://./.vlo/dev.db",
@@ -289,7 +289,7 @@ export interface ServeResult extends Listening {
  *
  * @example
  * ```ts
- * import { serve } from "@vlo/sdk/host";
+ * import { serve } from "@oona/vlo/host";
  *
  * const server = await serve({
  *   journal: "postgres://user:pass@localhost/app",
@@ -327,7 +327,7 @@ export async function serve(options: ServeOptions): Promise<ServeResult> {
  * @example
  * ```ts
  * // app/api/vlo/[[...path]]/route.ts
- * import { handler } from "@vlo/sdk/host";
+ * import { handler } from "@oona/vlo/host";
  *
  * export const { GET, POST } = handler({
  *   journal: process.env.DATABASE_URL ?? "sqlite://./.vlo/dev.db",

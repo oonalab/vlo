@@ -14,7 +14,7 @@ import {
   signalOf,
   step,
   waitFor,
-} from "@vlo/sdk";
+} from "@oona/vlo";
 import { approve, finish, plan, work } from "./activities.ts";
 
 export default defineWorkflow(

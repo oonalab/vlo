@@ -1,5 +1,5 @@
 /**
- * Test helpers, published as `@vlo/sdk/testing`.
+ * Test helpers, published as `@oona/vlo/testing`.
  *
  * `journalConformance` is the contract every journal implementation has to
  * satisfy; point it at your own `Journal` and the durability promises the host

@@ -1,6 +1,6 @@
 /** Activities and the approval signal the pipeline is built from. */
 
-import { activity, signal } from "@vlo/sdk";
+import { activity, signal } from "@oona/vlo";
 import { z } from "zod";
 
 export const plan = activity("pipeline.plan", {

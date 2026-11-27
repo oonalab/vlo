@@ -118,7 +118,7 @@ warns when a manual orchestrator has no `deploy.cron`.
 ## Budget is a reducer decision
 
 **Decision.** The kernel banks every attempt's `usage` into `usage_total` and hands it to the
-reducer on every event. Budget enforcement lives in `@vlo/agent`, which parks an exhausted
+reducer on every event. Budget enforcement lives in `@oona/vlo/agent`, which parks an exhausted
 run on a top-up signal instead of failing it.
 
 **Why.** An engine-level interceptor would need policy the kernel cannot know (what a token

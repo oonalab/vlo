@@ -216,7 +216,7 @@ function awaitHuman<T>(definition: SignalDef<T>, options: AwaitHumanOptions): Co
  *
  * @example
  * ```ts
- * import { cmd, defineWorkflow } from "@vlo/sdk";
+ * import { cmd, defineWorkflow } from "@oona/vlo";
  * import { approve, work } from "./activities.ts";
  *
  * export default defineWorkflow("review", {

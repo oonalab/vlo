@@ -21,7 +21,7 @@ export interface Clock {
  *
  * @example
  * ```ts
- * import { fakeClock } from "@vlo/sdk/testing";
+ * import { fakeClock } from "@oona/vlo/testing";
  *
  * const clock = fakeClock(1_700_000_000_000);
  * const host = createHost({

@@ -7,6 +7,8 @@
  * check reports and what a template deploys all come from one place in `vlo.config.ts`.
  */
 
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { dev, USAGE as DEV_USAGE } from "./cli/dev.ts";
 import { deployCommand, USAGE as DEPLOY_USAGE } from "./cli/deploy.ts";
 import { doctorCommand, USAGE as DOCTOR_USAGE } from "./cli/doctor.ts";
@@ -66,7 +68,21 @@ export async function main(
   }
 }
 
-if (process.argv[1] !== undefined && import.meta.url === `file://${process.argv[1]}`) {
+/**
+ * True when this module is the process entry point. An installed `vlo` is launched through a
+ * symlink in `node_modules/.bin`, so the launch path is resolved before it is compared.
+ */
+function isEntryPoint(): boolean {
+  const launched = process.argv[1];
+  if (launched === undefined) return false;
+  try {
+    return realpathSync(launched) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isEntryPoint()) {
   main().catch((error: unknown) => {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 1;

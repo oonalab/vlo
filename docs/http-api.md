@@ -147,7 +147,7 @@ The pull half of delivery. Request `{ "queue": string, "worker_id": string, "wai
 on that queue, records each as `running` with a lease, and answers `200 { "tasks": PushedTask[] }`.
 With nothing to hand out it holds the request open up to `wait_ms`, re-checking every 500 ms
 and waking early when a transition in this process commits a task for the queue.
-`runPullWorker` in `@vlo/sdk/host` is the client loop.
+`runPullWorker` in `@oona/vlo/host` is the client loop.
 
 ### Task callbacks
 
@@ -207,11 +207,11 @@ handler is outstanding, or `max_ms` (default 25 000) runs out, and answers
 
 ## The client
 
-`createClient({ baseUrl?, token?, fetch? })` from `@vlo/sdk/host` wraps every route above.
+`createClient({ baseUrl?, token?, fetch? })` from `@oona/vlo/host` wraps every route above.
 Lifted from the test suite:
 
 ```ts
-import { createClient, serve } from "@vlo/sdk/host";
+import { createClient, serve } from "@oona/vlo/host";
 
 const server = await serve({ journal: "sqlite://.vlo/dev.db", workflows: [exampleWorkflow],
   activities: [plan, work, finish], signals: [approve], workers: [worker],

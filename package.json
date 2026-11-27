@@ -1,0 +1,17 @@
+{
+  "name": "vlo-workspace",
+  "private": true,
+  "description": "Workspace root for Vlo. The published package is sdk/ts/sdk (@oona/vlo).",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "build": "pnpm --filter @oona/vlo build",
+    "test": "pnpm --filter @oona/vlo test",
+    "typecheck": "pnpm -r typecheck",
+    "docs:api": "pnpm --filter @oona/vlo docs:api",
+    "check:links": "node scripts/check-links.mjs"
+  }
+}

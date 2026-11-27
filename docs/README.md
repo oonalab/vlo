@@ -39,8 +39,8 @@ SDK and CLI are TypeScript on Node.
 
 ## Generated API reference
 
-- **TypeScript** (`@vlo/sdk`, `@vlo/agent`): TypeDoc renders every exported symbol into
-  `docs/api/`. Build it with `pnpm --filter @vlo/sdk docs:api`; the output is produced in CI and
+- **TypeScript** (`@oona/vlo` and its `/host`, `/agent` and `/testing` entries): TypeDoc renders every exported symbol into
+  `docs/api/`. Build it with `pnpm --filter @oona/vlo docs:api`; the output is produced in CI and
   is not committed, so you will not find it in a checkout.
 - **Rust** (`vlo-types`, `vlo-kernel`, `vlo-kernel-wasm`, `vlo-traits`): run `cargo doc
   --workspace --no-deps --open` from the repository root.

@@ -55,8 +55,8 @@ WORKDIR /app
 RUN corepack enable
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages/vlo ./packages/vlo
-RUN pnpm install --frozen-lockfile --filter @vlo/sdk...
-RUN pnpm --filter @vlo/sdk build
+RUN pnpm install --frozen-lockfile --filter @oona/vlo...
+RUN pnpm --filter @oona/vlo build
 
 FROM node:22-alpine AS runner
 WORKDIR /app

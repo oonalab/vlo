@@ -1,4 +1,4 @@
-// Markdown link gate: every relative link under packages/vlo resolves to a file that
+// Markdown link gate: every relative link in this repository resolves to a file that
 // exists inside the package, and no page leans on the monorepo it was extracted from.
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";

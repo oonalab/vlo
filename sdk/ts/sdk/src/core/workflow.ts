@@ -97,7 +97,7 @@ export class WorkflowFailure extends Error {
  *
  * @example
  * ```ts
- * import { cmd, defineWorkflow } from "@vlo/sdk";
+ * import { cmd, defineWorkflow } from "@oona/vlo";
  * import { work } from "./activities.ts";
  *
  * export default defineWorkflow("uppercase", {

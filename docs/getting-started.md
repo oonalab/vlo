@@ -9,13 +9,13 @@ the snapshot: nothing replays your code.
 ## Install
 
 ```sh
-pnpm add @vlo/sdk zod
+pnpm add @oona/vlo zod
 ```
 
 - Node ≥ 22.5 (the SQLite journal uses `node:sqlite`).
 - Zod 4 is a peer dependency. `@google-cloud/storage` is optional and only needed for a
   `gcs://` blob store.
-- The `vlo` CLI ships with `@vlo/sdk` (`npx vlo …`).
+- The `vlo` CLI ships with `@oona/vlo` (`npx vlo …`).
 
 ## The smallest program
 
@@ -24,7 +24,7 @@ workflow module exports a reducer.
 
 ```ts
 // vlo.config.ts
-import { defineConfig } from "@vlo/sdk";
+import { defineConfig } from "@oona/vlo";
 
 export default defineConfig({
   workflows: ["*.workflow.ts"],
@@ -36,7 +36,7 @@ export default defineConfig({
 
 ```ts
 // hello.workflow.ts
-import { cmd, defineWorkflow } from "@vlo/sdk";
+import { cmd, defineWorkflow } from "@oona/vlo";
 
 export default defineWorkflow("hello", {
   init: (input: { name: string }) => ({ greeting: `hello, ${input.name}` }),
@@ -81,10 +81,10 @@ curl -s http://localhost:4100/v1/runs/run_…
 # {"run_id":"run_…","workflow":"hello","status":"completed","output":"hello, world",…}
 ```
 
-With the client (it lives in `@vlo/sdk/host`):
+With the client (it lives in `@oona/vlo/host`):
 
 ```ts
-import { createClient } from "@vlo/sdk/host";
+import { createClient } from "@oona/vlo/host";
 
 const client = createClient({ baseUrl: "http://localhost:4100" });
 
@@ -110,7 +110,7 @@ Real workflows do their non-deterministic work in activities, run by workers. Th
 ```ts
 // activities.ts
 import { z } from "zod";
-import { activity } from "@vlo/sdk";
+import { activity } from "@oona/vlo";
 
 export const shout = activity("hello.shout", {
   input: z.object({ text: z.string() }),
@@ -120,7 +120,7 @@ export const shout = activity("hello.shout", {
 
 ```ts
 // shout.workflow.ts
-import { defineWorkflow, sequence, step } from "@vlo/sdk";
+import { defineWorkflow, sequence, step } from "@oona/vlo";
 import { shout } from "./activities.ts";
 
 export default defineWorkflow("shout", sequence([step(shout)]));
@@ -128,7 +128,7 @@ export default defineWorkflow("shout", sequence([step(shout)]));
 
 ```ts
 // shout.worker.ts
-import { defineWorker } from "@vlo/sdk";
+import { defineWorker } from "@oona/vlo";
 
 export default defineWorker({
   "hello.shout": (input: { text: string }) => ({ upper: input.text.toUpperCase() }),
@@ -158,7 +158,7 @@ config change, not a code change: see [activities-and-workers.md](./activities-a
 
 - [`../examples/hello/`](../examples/hello/) — the program above.
 - [`../examples/pipeline/`](../examples/pipeline/) — plan → fan out → wait for a human → finish.
-- [`../examples/agent/`](../examples/agent/) — an `@vlo/agent` loop with a budget.
+- [`../examples/agent/`](../examples/agent/) — an `@oona/vlo/agent` loop with a budget.
 
 ## Where next
 
@@ -168,7 +168,7 @@ config change, not a code change: see [activities-and-workers.md](./activities-a
 | [workflows.md](./workflows.md) | The reducer contract, every `cmd.*`, the `sequence` helpers |
 | [activities-and-workers.md](./activities-and-workers.md) | Activities, retries, leases, push and pull workers |
 | [signals-and-humans.md](./signals-and-humans.md) | Signals, deadlines, signed links |
-| [agents.md](./agents.md) | `@vlo/agent`: decide → tool → evaluate with a budget |
+| [agents.md](./agents.md) | `@oona/vlo/agent`: decide → tool → evaluate with a budget |
 | [configuration.md](./configuration.md) | The whole `vlo.config.ts` reference |
 | [cli.md](./cli.md) | `vlo dev`, `serve`, `doctor`, `deploy` |
 | [deployment.md](./deployment.md) | Self-hosting, serverless, role splitting |

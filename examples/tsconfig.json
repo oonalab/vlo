@@ -18,9 +18,9 @@
     // The workspace siblings resolve to their unbuilt `dist/` in a fresh checkout. Point the
     // bare specifiers at their sources so `tsc` and `tsx` both work with no build step.
     "paths": {
-      "@vlo/sdk": ["../sdk/ts/sdk/src/index.ts"],
-      "@vlo/sdk/host": ["../sdk/ts/sdk/src/host.ts"],
-      "@vlo/agent": ["../sdk/ts/agent/src/index.ts"]
+      "@oona/vlo": ["../sdk/ts/sdk/src/index.ts"],
+      "@oona/vlo/host": ["../sdk/ts/sdk/src/host.ts"],
+      "@oona/vlo/agent": ["../sdk/ts/sdk/src/agent/index.ts"]
     }
   },
   "include": ["hello/**/*", "pipeline/**/*", "agent/**/*"]

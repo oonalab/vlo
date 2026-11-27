@@ -5,7 +5,7 @@ handlers with the current state and one event, and expects the next state and a 
 commands back.
 
 ```ts
-import { cmd, defineWorkflow, type Reduction } from "@vlo/sdk";
+import { cmd, defineWorkflow, type Reduction } from "@oona/vlo";
 import { plan } from "./activities.ts";
 
 interface State { stage: "planning" | "done"; n: number }
@@ -93,7 +93,7 @@ hand-written reducer produces. Phases run in order; `state.phase` is the index i
 ```ts
 import {
   defineWorkflow, fanOut, fanOutResultsOf, resultOf, sequence, signalOf, sleep, step, waitFor,
-} from "@vlo/sdk";
+} from "@oona/vlo";
 import { approve, finish, plan, work } from "./activities.ts";
 
 export const exampleWorkflow = defineWorkflow(
@@ -167,7 +167,7 @@ see [the `sequence` helper](#the-sequence-helper).
 Throw `WorkflowFailure(message, details?)` — or anything else — from a handler:
 
 ```ts
-import { WorkflowFailure } from "@vlo/sdk";
+import { WorkflowFailure } from "@oona/vlo";
 
 task_done: (state, event) => {
   if (event.status !== "succeeded") {

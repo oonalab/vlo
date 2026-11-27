@@ -5,7 +5,7 @@ output. `vlo.config.ts` has a single `dev` profile on SQLite and file blobs, eve
 process.
 
 ```sh
-pnpm dev:hello                                    # from packages/vlo/examples; API on :4100
+pnpm dev:hello                                    # from examples/; API on :4100
 curl -s -X POST localhost:4100/v1/runs -H 'content-type: application/json' \
   -d '{"workflow":"hello","input":{"name":"world"}}'         # → {"run_id":"run_…"}
 curl -s localhost:4100/v1/runs/<run_id>                        # poll until "status":"completed"

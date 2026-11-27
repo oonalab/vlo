@@ -7,7 +7,7 @@ maps or passes through, and the checks `vlo doctor` prints. Source: `src/host/er
 ## Host errors
 
 Every class extends `VloError` (`code`, `status`, `message`) and is exported from
-`@vlo/sdk/host`. A route catches it and answers `{ "error": { code, message } }` with `status`.
+`@oona/vlo/host`. A route catches it and answers `{ "error": { code, message } }` with `status`.
 Anything that is not a `VloError` becomes `500 internal`.
 
 | Class | `code` | HTTP | When |
@@ -54,10 +54,10 @@ Three codes — `unknown_step`, `already_terminal`, `bad_seq` — are treated as
 
 | Class | Package | When |
 | --- | --- | --- |
-| `ActivityInputError` | `@vlo/sdk` | `cmd.task(activity, input)` was given input that fails the activity's Zod input schema. Thrown synchronously inside the reducer, which fails the run. |
-| `WorkflowFailure` | `@vlo/sdk` | The deliberate way to fail a run from a reducer: `throw new WorkflowFailure(message, details?)`. `sequence` throws it for a task that did not succeed and for a `waitFor` deadline with `onTimeout: "fail"`. |
-| `JournalClosed` | `@vlo/sdk/host` | Any journal call after `close()`. `code: "journal_closed"`. Expected during shutdown. |
-| `LeaseLost` | `@vlo/sdk/host` | See above; also surfaces to a worker as a rejected `ctx.heartbeat()`, after which `ctx.signal` is aborted. |
+| `ActivityInputError` | `@oona/vlo` | `cmd.task(activity, input)` was given input that fails the activity's Zod input schema. Thrown synchronously inside the reducer, which fails the run. |
+| `WorkflowFailure` | `@oona/vlo` | The deliberate way to fail a run from a reducer: `throw new WorkflowFailure(message, details?)`. `sequence` throws it for a task that did not succeed and for a `waitFor` deadline with `onTimeout: "fail"`. |
+| `JournalClosed` | `@oona/vlo/host` | Any journal call after `close()`. `code: "journal_closed"`. Expected during shutdown. |
+| `LeaseLost` | `@oona/vlo/host` | See above; also surfaces to a worker as a rejected `ctx.heartbeat()`, after which `ctx.signal` is aborted. |
 
 ## `vlo doctor`
 
@@ -77,7 +77,7 @@ not `✓`. Any `✗` sets exit code 1. `--json` prints the same `Check[]`.
 | `blob` | ✗ | `the store is not content-addressed; payload refs would not resolve` | `put` returned something other than the sha256 of the bytes; your store breaks the contract. |
 | `blob` | ✗ | `the store is truncating writes` | `get` returned fewer bytes than were written. |
 | `blob` | ✗ | `check the blob url and that the process may write there` | Bad URL, missing peer dependency for `gcs://`, or no write permission. |
-| `kernel` | ✗ | `run packages/vlo/scripts/build-kernel.sh, or set VLO_KERNEL_WASM` | The wasm is missing beside `src/` or `dist/`; build it with `scripts/build-kernel.sh` or point `VLO_KERNEL_WASM` at one. |
+| `kernel` | ✗ | `run scripts/build-kernel.sh, or set VLO_KERNEL_WASM` | The wasm is missing beside `src/` or `dist/`; build it with `scripts/build-kernel.sh` or point `VLO_KERNEL_WASM` at one. |
 | `kernel` | ⚠ | `over the 1024 KiB budget; build with --release` | A debug build was committed. |
 | `kernel` | ✗ | `this SDK speaks protocol 1; rebuild the kernel` | Protocol mismatch between the wasm and the SDK. |
 | `schemas` | ⚠ | `these register on the next host boot` | No host has booted this build yet; not an error. |

@@ -27,7 +27,7 @@ VLO_PROFILE=prod PORT=8080 npx vlo serve
 Or in code, with the same options the profile would produce:
 
 ```ts
-import { serve } from "@vlo/sdk/host";
+import { serve } from "@oona/vlo/host";
 import { workflows, workers, activities, signals } from "./vlo/index.ts";
 
 const running = await serve({
@@ -130,8 +130,8 @@ present it on callbacks.
 An application with several areas registers each as a domain instead of four flat arrays:
 
 ```ts
-import { defineDomain } from "@vlo/sdk";
-import { createHost } from "@vlo/sdk/host";
+import { defineDomain } from "@oona/vlo";
+import { createHost } from "@oona/vlo/host";
 
 export const brand = defineDomain({ name: "brand", workflows: [research, weekly], workers: [brandWorker], activities, signals });
 const host = createHost({ journal, domains: [brand, media, ideas], queues: { media: { mode: "pull" } } });
@@ -169,7 +169,7 @@ is in [configuration.md](./configuration.md#deploy).
 
 | File | Goes to | What it is |
 | --- | --- | --- |
-| `cloud-run/Dockerfile` | keep | Two-stage `node:22-alpine` image. Builds `@vlo/sdk`, copies `vlo.config.ts` and `src/`, sets `VLO_PROFILE`, exposes 8080, `CMD vlo serve --profile <name>`. |
+| `cloud-run/Dockerfile` | keep | Two-stage `node:22-alpine` image. Builds `@oona/vlo`, copies `vlo.config.ts` and `src/`, sets `VLO_PROFILE`, exposes 8080, `CMD vlo serve --profile <name>`. |
 | `cloud-run/cloudbuild.yaml` | keep | build → push → `gcloud run deploy`, parameterised by `_SERVICE`, `_REGION`, `_REPO`. |
 | `cloud-run/cloud-run-vlo.tf` | `terraform/` | Per-env (`for_each` over `envs`) Cloud Run v2 service, service account, Secret Manager *containers* for `DATABASE_URL`, `VLO_TOKEN`, `VLO_PUSH_SECRET`, IAM bindings, `allUsers` invoker (the bearer token is the gate), `min_instance_count = 1` so the loop dispatcher keeps ticking, image under `lifecycle.ignore_changes`. Outputs `vlo_urls`. |
 | `cloud-run/cloudbuild-vlo.tf` | `terraform/` | Artifact Registry repo, a deployer service account, one Cloud Build trigger per env on `main`; `prod` gated on manual approval. |

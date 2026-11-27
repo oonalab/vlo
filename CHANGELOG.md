@@ -2,7 +2,7 @@
 
 All notable changes to Vlo are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
-[Semantic Versioning](https://semver.org/). Packages `@vlo/sdk`, `@vlo/agent` and the
+[Semantic Versioning](https://semver.org/). The `@oona/vlo` package and the
 `vlo-*` crates share one version.
 
 ## [Unreleased]
@@ -24,7 +24,7 @@ All notable changes to Vlo are recorded here. The format follows
 - Authoring: `activity()` with Zod schemas, `signal()`, `defineWorkflow`, `cmd.*`,
   `sequence`, `step`, `fanOut`, `waitFor`, `sleep`, `cmd.awaitHuman`, `defineWorker`,
   `createClient`, `defineConfig` and `env()`.
-- `@vlo/agent`: `decision()`, `agentLoop()` with a budget that parks the run on a top-up
+- `@oona/vlo/agent`: `decision()`, `agentLoop()` with a budget that parks the run on a top-up
   signal instead of failing it, `budgetTopup()`.
 - CLI: `vlo dev`, `vlo serve`, `vlo doctor`, `vlo deploy` (Cloud Run and Vercel
   templates), `--help`, `--version`.
@@ -58,6 +58,13 @@ All notable changes to Vlo are recorded here. The format follows
 
 ### Changed
 
+- **Breaking:** the package is published as `@oona/vlo` (was `@vlo/sdk`). The agent layer is
+  no longer a separate package: `@vlo/agent` is now the `@oona/vlo/agent` entry of the same
+  package, alongside `@oona/vlo/host` and `@oona/vlo/testing`. The `vlo` command, the
+  `vlo-*` crates and the `vlo` Postgres schema keep their names.
+- The repository is `github.com/oonalab/vlo`; a pnpm workspace at the root covers
+  `sdk/ts/sdk` and `examples`.
+
 - Postgres journal: `migrate()` skips `CREATE SCHEMA` when the schema already exists, so a
   DBA-provisioned schema works for a role without `CREATE` on the database; `vlo doctor`
   explains that privilege when the boot fails on it.
@@ -83,4 +90,9 @@ All notable changes to Vlo are recorded here. The format follows
   host rebuilds only when a checkpoint is missing or its digest differs, and a stale
   field is simply absent until the next event.
 
-[Unreleased]: https://github.com/oona/orbi/tree/main/packages/vlo
+### Fixed
+
+- The installed `vlo` command did nothing: its entry-point check compared against the launch
+  path, which is a symlink in `node_modules/.bin`. The path is now resolved first.
+
+[Unreleased]: https://github.com/oonalab/vlo/tree/main

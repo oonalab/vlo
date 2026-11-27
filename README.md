@@ -16,17 +16,17 @@ journal and comparing hashes.
 - **Host** — TypeScript on Node, runs on Cloud Run, Vercel, a container or a laptop. `sdk/ts/sdk`.
 - **Journal = queue** — your Postgres (works behind transaction-mode poolers) or a SQLite file.
 - **Workers** — any language, pushed over signed HTTP or pulling from the API.
-- **Agents** — `@vlo/agent`: decide → act → evaluate with a budget that parks, not fails. `sdk/ts/agent`.
+- **Agents** — `@oona/vlo/agent`, in the same package: decide → act → evaluate with a budget that parks, not fails. `sdk/ts/sdk/src/agent`.
 
 ## Try it
 
 ```sh
-pnpm add @vlo/sdk zod        # Node ≥ 22.5
+pnpm add @oona/vlo zod        # Node ≥ 22.5
 ```
 
 ```ts
 // hello.workflow.ts
-import { activity, cmd, defineWorkflow, WorkflowFailure } from "@vlo/sdk";
+import { activity, cmd, defineWorkflow, WorkflowFailure } from "@oona/vlo";
 import { z } from "zod";
 
 export const greet = activity("hello.greet", {
@@ -48,7 +48,7 @@ export default defineWorkflow("hello", {
 
 ```ts
 // hello.worker.ts
-import { defineWorker } from "@vlo/sdk";
+import { defineWorker } from "@oona/vlo";
 
 export default defineWorker({
   "hello.greet": (input: { name: string }) => ({ greeting: `Hello, ${input.name}!` }),
@@ -57,7 +57,7 @@ export default defineWorker({
 
 ```ts
 // vlo.config.ts
-import { defineConfig } from "@vlo/sdk";
+import { defineConfig } from "@oona/vlo";
 
 export default defineConfig({
   workflows: ["*.workflow.ts"],
@@ -90,7 +90,7 @@ The full index is [docs/README.md](docs/README.md): workflows, activities and wo
 signals and humans, agents, configuration, CLI, deployment, journal, HTTP API,
 observability, errors, kernel protocol, architecture, design decisions, limits.
 
-API reference: `pnpm --filter @vlo/sdk docs:api` (TypeDoc) and `cargo doc --workspace --open`.
+API reference: `pnpm --filter @oona/vlo docs:api` (TypeDoc) and `cargo doc --workspace --open`.
 
 ## Layout
 
@@ -99,8 +99,8 @@ crates/types        wire types + generated JSON Schema (schema/kernel-protocol.s
 crates/kernel       pure logic, native tests, proptests, golden fixtures (fixtures/kernel/)
 crates/kernel-wasm  wasm-bindgen exports → sdk/ts/sdk/wasm/ (committed)
 crates/traits       Journal / BlobStore / TaskTransport for a future Rust host
-sdk/ts/sdk          @vlo/sdk: authoring, journal, host, client, cli
-sdk/ts/agent        @vlo/agent: decision(), agentLoop(), budgetTopup()
+sdk/ts/sdk          @oona/vlo: authoring, journal, host, client, cli
+  src/agent         @oona/vlo/agent: decision(), agentLoop(), budgetTopup()
 examples/           hello, pipeline, agent
 docs/               user documentation
 ```
@@ -111,8 +111,9 @@ docs/               user documentation
 rustup show                              # toolchain pinned in rust-toolchain.toml
 cargo test --workspace                   # kernel
 ./scripts/build-kernel.sh                # rebuild wasm after kernel changes (commit the output)
-pnpm --filter @vlo/sdk test              # SDK on SQLite; set VLO_TEST_DATABASE_URL for Postgres
-pnpm --filter @vlo/sdk exec tsx src/cli.ts --help
+pnpm install                             # once, from the repo root
+pnpm --filter @oona/vlo test             # SDK on SQLite; set VLO_TEST_DATABASE_URL for Postgres
+pnpm --filter @oona/vlo exec tsx src/cli.ts --help
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the CI gates and how to regenerate the schema and

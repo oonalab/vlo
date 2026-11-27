@@ -4,7 +4,7 @@
 plan three items, upper-case them two at a time, park until a human approves, then report.
 
 ```sh
-pnpm dev:pipeline                                 # from packages/vlo/examples; API on :4100
+pnpm dev:pipeline                                 # from examples/; API on :4100
 curl -s -X POST localhost:4100/v1/runs -H 'content-type: application/json' \
   -d '{"workflow":"pipeline","input":{"n":3}}'               # → {"run_id":"run_…"}
 curl -s localhost:4100/v1/runs/<run_id>                        # "status":"awaiting_signal" once the fan-out is done

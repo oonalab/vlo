@@ -59,7 +59,7 @@ function route(plan: DeployPlan): string {
  * POST /v1/timers/tick instead, and every tick does one full dispatcher pass.
  */
 
-import { handler } from "@vlo/sdk/host";
+import { handler } from "@oona/vlo/host";
 // Globs cannot be bundled into a function, so the modules are imported explicitly.
 // \`vlo deploy\` found ${plan.workflows.length === 0 ? "no workflows" : `these workflows: ${plan.workflows.join(", ")}`}; re-export them from these two barrels.
 import { workflows } from "@/vlo/workflows";

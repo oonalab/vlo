@@ -11,8 +11,8 @@ WORKDIR /app
 RUN corepack enable
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages/vlo ./packages/vlo
-RUN pnpm install --frozen-lockfile --filter @vlo/sdk...
-RUN pnpm --filter @vlo/sdk build
+RUN pnpm install --frozen-lockfile --filter @oona/vlo...
+RUN pnpm --filter @oona/vlo build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -530,7 +530,7 @@ exports[`vlo deploy > generates the vercel stack > vercel/route.ts 1`] = `
  * POST /v1/timers/tick instead, and every tick does one full dispatcher pass.
  */
 
-import { handler } from "@vlo/sdk/host";
+import { handler } from "@oona/vlo/host";
 // Globs cannot be bundled into a function, so the modules are imported explicitly.
 // \`vlo deploy\` found these workflows: demo; re-export them from these two barrels.
 import { workflows } from "@/vlo/workflows";

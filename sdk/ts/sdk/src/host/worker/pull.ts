@@ -50,7 +50,7 @@ export interface PullWorkerOptions {
  *
  * @example
  * ```ts
- * import { defineWorker, runPullWorker } from "@vlo/sdk/host";
+ * import { defineWorker, runPullWorker } from "@oona/vlo/host";
  *
  * const abort = new AbortController();
  * const loop = runPullWorker({

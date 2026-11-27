@@ -1,7 +1,7 @@
 /**
- * `@vlo/sdk` — the authoring surface: activities, signals, workflows, commands and the
- * pipeline helpers. Hosts, journals and the kernel live behind `@vlo/sdk/host` and
- * `@vlo/sdk/testing`; nothing here touches I/O.
+ * `@oona/vlo` — the authoring surface: activities, signals, workflows, commands and the
+ * pipeline helpers. Hosts, journals and the kernel live behind `@oona/vlo/host` and
+ * `@oona/vlo/testing`; nothing here touches I/O.
  */
 
 export {

@@ -10,7 +10,7 @@ flowchart TB
     ACT["activities · Zod schemas"]
     WF["workflows · pure reducers"]
     WK["workers · any language"]
-    AG["@vlo/agent · decision · agentLoop"]
+    AG["@oona/vlo/agent · decision · agentLoop"]
     CL["Client · createClient or HTTP"]
   end
   subgraph K["Kernel · Rust on wasm · no I/O"]
@@ -18,7 +18,7 @@ flowchart TB
     RD["prepare_event · reduce_step · write-set"]
     RT["state hash · retry planning · id derivation"]
   end
-  subgraph H["Host · @vlo/sdk/host on Node"]
+  subgraph H["Host · @oona/vlo/host on Node"]
     TR["applyEvent · one transaction per event"]
     DI["Dispatcher · outbox stages"]
     RO["Router · /v1 routes · SSE"]

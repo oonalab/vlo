@@ -1,9 +1,9 @@
 {
-  "name": "@vlo/examples",
+  "name": "@oona/vlo-examples",
   "version": "0.0.0",
   "private": true,
   "description": "Runnable Vlo examples: the smallest program, a fan-out pipeline with a human approval, and a budgeted agent loop.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "engines": {
     "node": ">=22.5"
@@ -15,8 +15,7 @@
     "dev:agent": "tsx ../sdk/ts/sdk/src/cli.ts dev --config agent/vlo.config.ts"
   },
   "dependencies": {
-    "@vlo/agent": "workspace:*",
-    "@vlo/sdk": "workspace:*",
+    "@oona/vlo": "workspace:*",
     "zod": "^4.0.0"
   },
   "devDependencies": {

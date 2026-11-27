@@ -5,7 +5,7 @@ labels: bug
 ---
 
 **Package and version**
-`@vlo/sdk` x.y.z / `@vlo/agent` x.y.z / crate `vlo-…` x.y.z
+`@oona/vlo` x.y.z / crate `vlo-…` x.y.z
 
 **Journal and host**
 SQLite or Postgres (which pooler, if any); `vlo dev`, `vlo serve`, or embedded via `createHost`; dispatcher mode.

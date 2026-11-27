@@ -1,7 +1,7 @@
 /**
- * `@vlo/sdk/host` — everything that touches durable state or the network.
+ * `@oona/vlo/host` — everything that touches durable state or the network.
  *
- * The authoring surface (`@vlo/sdk`) has no dependency on any of this: a workflow compiles
+ * The authoring surface (`@oona/vlo`) has no dependency on any of this: a workflow compiles
  * and unit-tests without a journal, a kernel or a port.
  */
 

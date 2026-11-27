@@ -57,7 +57,7 @@ export interface Registries {
  *
  * @example
  * ```ts
- * import { defineDomain } from "@vlo/sdk";
+ * import { defineDomain } from "@oona/vlo";
  * import { brandActivities } from "./activities.ts";
  * import { brandResearch, brandWeekly } from "./workflows.ts";
  * import { brandWorker } from "./worker.ts";

@@ -6,8 +6,8 @@ members = ["crates/*"]
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
-repository = "https://github.com/oona/orbi"
-homepage = "https://github.com/oona/orbi/tree/main/packages/vlo"
+repository = "https://github.com/oonalab/vlo"
+homepage = "https://github.com/oonalab/vlo"
 keywords = ["workflow", "durable-execution", "event-sourcing", "wasm", "state-machine"]
 categories = ["asynchronous", "wasm"]
 

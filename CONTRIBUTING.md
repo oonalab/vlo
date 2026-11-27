@@ -11,18 +11,18 @@ runs, and what a good change looks like.
 | `wasm32-unknown-unknown` target | installed by the toolchain file | kernel wasm |
 | `wasm-pack` | 0.12.1 | builds the committed wasm bindings |
 | Node.js | ≥ 22.5 | `node:sqlite` in the SQLite journal |
-| pnpm | 10 or newer | workspace: `sdk/ts/sdk`, `sdk/ts/agent`, `examples` |
+| pnpm | 10 or newer | workspace: `sdk/ts/sdk`, `examples` (`pnpm-workspace.yaml`) |
 | Postgres | optional, 16+ | `VLO_TEST_DATABASE_URL` runs the Postgres conformance suite |
 
 ## The loop
 
 ```sh
+pnpm install                                 # once, from the repo root
 cargo test --workspace                       # kernel: unit, proptest, golden fixtures
 ./scripts/build-kernel.sh                    # after any kernel change; commit sdk/ts/sdk/wasm/
-pnpm --filter @vlo/sdk test                  # SDK on SQLite
-pnpm --filter @vlo/agent test
-pnpm --filter @vlo/examples typecheck
-pnpm --filter @vlo/sdk exec tsx src/cli.ts dev --config ../../../examples/hello/vlo.config.ts --profile dev
+pnpm --filter @oona/vlo test                 # SDK and agent layer on SQLite
+pnpm --filter @oona/vlo-examples typecheck
+pnpm --filter @oona/vlo exec tsx src/cli.ts dev --config ../../../examples/hello/vlo.config.ts --profile dev
 ```
 
 Two generated artifacts are committed and CI checks them:
@@ -61,7 +61,7 @@ replay is the equivalence check.
 - **Errors are values.** Add a code to the closed set in `crates/kernel/src/error.rs` or a
   `VloError` subclass in `sdk/ts/sdk/src/host/errors.ts`; document it in `docs/errors.md`.
 - **Journal changes are migrations.** Add `000N_name` to `sdk/ts/sdk/src/journal/migrations.ts`
-  for both dialects and extend `journalConformance` in `@vlo/sdk/testing`.
+  for both dialects and extend `journalConformance` in `@oona/vlo/testing`.
 - **Config changes touch three places**: `defineConfig` types, `vlo doctor` checks, and
   `docs/configuration.md`.
 
@@ -71,6 +71,28 @@ replay is the equivalence check.
 - Include tests: a fixture for kernel behaviour, a vitest for host behaviour.
 - Update `CHANGELOG.md` under **Unreleased**.
 - Commit messages: imperative subject ≤ 72 characters, a body that says why.
+
+## Releasing
+
+`@oona/vlo` is the only published package; `examples` and the workspace root are private.
+The package and the `vlo-*` crates share one version.
+
+```sh
+# 1. set the version in sdk/ts/sdk/package.json and Cargo.toml; move CHANGELOG.md's
+#    Unreleased entries under the new version
+pnpm install
+pnpm -r typecheck && pnpm test                  # everything green
+pnpm build && pnpm --filter @oona/vlo size      # dist/ and the size budgets
+cd sdk/ts/sdk
+pnpm pack --dry-run                             # read the file list: dist/, wasm/, README, LICENSE, NOTICE
+npm whoami                                      # must be a member of the `oona` npm org
+pnpm publish --access public                    # asks for a 2FA code
+git tag v<version> && git push --tags
+```
+
+Publish with `pnpm publish`, not `npm publish`: `prepack` copies `LICENSE` and `NOTICE` in
+from the repo root either way, but only pnpm understands the workspace. A published version
+number can never be reused, so check the dry run before the real one.
 
 ## Reporting
 

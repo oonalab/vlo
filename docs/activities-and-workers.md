@@ -8,7 +8,7 @@ outputs when a worker reports one, and owns leases, retries and idempotency.
 
 ```ts
 import { z } from "zod";
-import { activity } from "@vlo/sdk";
+import { activity } from "@oona/vlo";
 
 export const work = activity("example.work", {
   input: z.object({ item: z.string() }),
@@ -42,7 +42,7 @@ A retry repeats the journaled input. When repeating the same ask would fail the 
 a model looping inside a long prompt — wrap the handler with `withRetryInput`:
 
 ```ts
-import { defineWorker, withRetryInput } from "@vlo/sdk";
+import { defineWorker, withRetryInput } from "@oona/vlo";
 
 defineWorker({
   "brand.synthesize": withRetryInput(synthesize, (input, attempt) => ({ ...input, compact: attempt > 1 })),
@@ -82,7 +82,7 @@ language must produce the same `schema_ref` for the same definition. The golden 
 ## Implementing a worker
 
 ```ts
-import { defineWorker } from "@vlo/sdk";
+import { defineWorker } from "@oona/vlo";
 
 export default defineWorker(
   {
@@ -158,7 +158,7 @@ publicUrl: "https://vlo.example.com",
 The worker side is another host holding the `worker:<queue>` role:
 
 ```ts
-import { serve } from "@vlo/sdk/host";
+import { serve } from "@oona/vlo/host";
 
 await serve({
   journal: process.env.DATABASE_URL!,
@@ -184,7 +184,7 @@ Headers: `vlo-task-id`, `vlo-attempt`, `vlo-timestamp` (epoch ms) and
 `vlo-signature: v1=<hex>` where the hex is
 `HMAC-SHA256(secret, "<task_id>.<attempt>.<timestamp>.<sha256(body)>")`. The receiver
 rejects a timestamp more than 5 minutes off. `verifySignature(secret, headers, rawBody)`
-and `signPush(...)` in `@vlo/sdk/host` implement both sides.
+and `signPush(...)` in `@oona/vlo/host` implement both sides.
 
 How the orchestrator reads the worker's answer:
 
@@ -213,7 +213,7 @@ pull worker falls back to its configured `baseUrl`.
 Set `mode: "pull"` on the queue and the dispatcher leaves its tasks alone. A worker asks:
 
 ```ts
-import { runPullWorker } from "@vlo/sdk/host";
+import { runPullWorker } from "@oona/vlo/host";
 
 await runPullWorker({
   baseUrl: "https://vlo.example.com",

@@ -146,7 +146,7 @@ const DEFAULT_MAX_CHAIN = 50;
  *
  * @example
  * ```ts
- * import { createClient } from "@vlo/sdk/host";
+ * import { createClient } from "@oona/vlo/host";
  *
  * const client = createClient({ baseUrl: "http://127.0.0.1:4100", token: "control-plane-token" });
  * const run = await client.start(pipeline, { clip: "reel" });

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the Vlo kernel to wasm and place it inside @vlo/sdk.
+# Build the Vlo kernel to wasm and place it inside @oona/vlo.
 # Output is committed so contributors and Vercel builds never need a Rust toolchain;
 # CI rebuilds and fails on drift.
 set -euo pipefail

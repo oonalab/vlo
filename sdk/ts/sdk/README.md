@@ -1,23 +1,26 @@
-# @vlo/sdk
+# @oona/vlo
 
-The TypeScript SDK and host for [Vlo](../../../README.md), an event-sourced durable
-execution engine. A workflow is a pure reducer `(state, event) → (state, commands)`; the
-Rust kernel (bundled as wasm) folds events, and your Postgres or a SQLite file is both
-the journal and the task queue.
+[Vlo](https://github.com/oonalab/vlo) is an event-sourced durable execution engine for
+workflows and agents. A workflow is a pure reducer `(state, event) → (state, commands)`; the
+Rust kernel (bundled as wasm) folds events, and your Postgres or a SQLite file is both the
+journal and the task queue. Nothing suspends, so there is no code replay.
 
 ```sh
-pnpm add @vlo/sdk zod          # Node ≥ 22.5
+pnpm add @oona/vlo zod          # Node ≥ 22.5
 ```
 
 | Entry | What it gives you |
 |---|---|
-| `@vlo/sdk` | authoring: `activity`, `signal`, `defineWorkflow`, `cmd`, `sequence`, `fanOut`, `waitFor`, `defineWorker`, `defineConfig`, `env` |
-| `@vlo/sdk/host` | runtime: `createHost`, `serve`, `handler`, `createClient`, `drainHost`, `runPullWorker`, journals, blob stores, errors |
-| `@vlo/sdk/testing` | `journalConformance`, `fakeClock` |
+| `@oona/vlo` | authoring: `activity`, `signal`, `defineWorkflow`, `cmd`, `sequence`, `fanOut`, `waitFor`, `defineWorker`, `defineConfig`, `env` |
+| `@oona/vlo/agent` | agent loop: `decision`, `agentLoop`, `budgetTopup` |
+| `@oona/vlo/host` | runtime: `createHost`, `serve`, `handler`, `createClient`, `drainHost`, `runPullWorker`, journals, blob stores, errors |
+| `@oona/vlo/testing` | `journalConformance`, `fakeClock` |
 | `vlo` (bin) | `vlo dev`, `vlo serve`, `vlo doctor`, `vlo deploy` |
 
+## A workflow
+
 ```ts
-import { activity, cmd, defineWorkflow, sequence, step } from "@vlo/sdk";
+import { activity, defineWorkflow, sequence, step } from "@oona/vlo";
 import { z } from "zod";
 
 const greet = activity("greet", { input: z.object({ name: z.string() }), output: z.string() });
@@ -25,7 +28,27 @@ const greet = activity("greet", { input: z.object({ name: z.string() }), output:
 export default defineWorkflow("hello", sequence([step(greet, (input) => input)]));
 ```
 
-Start reading at [Getting started](../../../docs/getting-started.md); the full docs index
-is [docs/README.md](../../../docs/README.md). Generated API reference: `pnpm docs:api`.
+## An agent
+
+`@oona/vlo/agent` is decide → act → evaluate as a pure reducer, with a budget that parks the
+run on a top-up signal instead of failing it.
+
+- `decision()` declares the activity that chooses the next tool from an observation.
+- `agentLoop()` builds a workflow that runs decision, tool and evaluator steps until the
+  decision returns `DONE`, the iteration cap is hit, or the budget is spent.
+- `budgetTopup()` declares the signal that resumes a parked run with more budget.
+
+Usage is accounted by the kernel on every event, so the budget check is deterministic and
+survives restarts. Nothing in this entry does I/O: `agentLoop` returns a workflow definition
+you hand to `defineWorkflow`.
+
+## Documentation
+
+- [Getting started](https://github.com/oonalab/vlo/blob/main/docs/getting-started.md)
+- [Concepts](https://github.com/oonalab/vlo/blob/main/docs/concepts.md)
+- [Agents](https://github.com/oonalab/vlo/blob/main/docs/agents.md)
+- [Full index](https://github.com/oonalab/vlo/blob/main/docs/README.md)
+- [Examples](https://github.com/oonalab/vlo/tree/main/examples): the smallest program, a
+  fan-out pipeline with a human approval, and a budgeted agent loop.
 
 Apache-2.0.

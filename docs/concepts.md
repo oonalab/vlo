@@ -20,7 +20,7 @@ that folds those events into state and asks for effects, and the host executes t
 | **Journal** | Your Postgres database or a SQLite file. Holds runs, events, the state checkpoint, tasks, timers, signals. It is also the queue: there is no broker. |
 | **Blob store** | A directory (`file://`) or a bucket (`gcs://`) for payloads over 256 KiB. The journal stores a `blob://sha256/<hex>` reference instead. |
 | **Kernel** | The Rust state machine, compiled to wasm and loaded by the host. Validates events, calls your reducer, validates commands, and produces the write-set the journal applies. No I/O. |
-| **Host** | The Node process around the kernel: opens the journal, serves HTTP, runs the dispatcher, runs in-process workers. `@vlo/sdk/host`. |
+| **Host** | The Node process around the kernel: opens the journal, serves HTTP, runs the dispatcher, runs in-process workers. `@oona/vlo/host`. |
 | **Role** | What one host process does: `orchestrator`, `api`, `worker:<queue>`. A process may hold any subset. |
 | **Worker** | Activity implementations: `defineWorker({ "name": handler })` plus the queues it serves. In-process, pushed to over HTTP, or polling. |
 | **Profile** | One named deployment configuration in `vlo.config.ts`: journal, blob, roles, queues, auth, dispatcher mode, deploy target. |

@@ -2,7 +2,7 @@
   "$schema": "https://typedoc.org/schema.json",
   "name": "Vlo",
   "entryPointStrategy": "packages",
-  "entryPoints": ["sdk", "agent"],
+  "entryPoints": ["sdk"],
   "out": "../../docs/api",
   "readme": "../../README.md",
   "includeVersion": true,
@@ -17,6 +17,6 @@
   "packageOptions": {
     "excludeInternal": true,
     "excludePrivate": true,
-    "sourceLinkTemplate": "https://github.com/oona/orbi/blob/{gitRevision}/{path}#L{line}"
+    "sourceLinkTemplate": "https://github.com/oonalab/vlo/blob/{gitRevision}/{path}#L{line}"
   }
 }

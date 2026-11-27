@@ -1,7 +1,7 @@
 /** Two tools, a decider constrained to them, a scorer, and the signal that raises the budget. */
 
-import { budgetTopup, decision } from "@vlo/agent";
-import { activity } from "@vlo/sdk";
+import { budgetTopup, decision } from "@oona/vlo/agent";
+import { activity } from "@oona/vlo";
 import { z } from "zod";
 
 export const draft = activity("agent.draft", {

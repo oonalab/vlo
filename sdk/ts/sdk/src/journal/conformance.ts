@@ -26,8 +26,8 @@ import type { Journal } from "./types.ts";
  *
  * @example
  * ```ts
- * import { openJournal } from "@vlo/sdk/host";
- * import { journalConformance } from "@vlo/sdk/testing";
+ * import { openJournal } from "@oona/vlo/host";
+ * import { journalConformance } from "@oona/vlo/testing";
  *
  * let index = 0;
  * journalConformance("sqlite journal", async () =>

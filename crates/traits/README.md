@@ -1,7 +1,7 @@
 # vlo-traits
 
 `Journal`, `BlobStore` and `TaskTransport` as Rust traits, mirroring the TypeScript
-interfaces in `@vlo/sdk/host` so a Rust host can reuse the kernel's write-set contract
+interfaces in `@oona/vlo/host` so a Rust host can reuse the kernel's write-set contract
 unchanged. The TypeScript host is the only host today; this crate is kept in sync and has
 no implementation.
 

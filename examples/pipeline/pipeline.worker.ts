@@ -1,4 +1,4 @@
-import { defineWorker } from "@vlo/sdk";
+import { defineWorker } from "@oona/vlo";
 
 export default defineWorker({
   "pipeline.plan": (input: { n: number }) => ({

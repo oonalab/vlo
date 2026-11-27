@@ -1,6 +1,6 @@
 # CLI
 
-The `vlo` command ships with `@vlo/sdk` (`npx vlo …`). Four verbs, one profile: whatever
+The `vlo` command ships with `@oona/vlo` (`npx vlo …`). Four verbs, one profile: whatever
 runs on your laptop, what `doctor` checks and what `deploy` renders all come from the same
 entry in `vlo.config.ts`. See [configuration.md](./configuration.md).
 
@@ -146,12 +146,12 @@ file-by-file contents are described in [deployment.md](./deployment.md).
 From a checkout of the repository:
 
 ```sh
-pnpm --filter @vlo/sdk exec tsx src/cli.ts dev --config ../../../examples/hello/vlo.config.ts
+pnpm --filter @oona/vlo exec tsx src/cli.ts dev --config ../../../examples/hello/vlo.config.ts
 ```
 
 The kernel wasm is committed at `sdk/ts/sdk/wasm/vlo_kernel_bg.wasm`; rebuild it after
 kernel changes with `./scripts/build-kernel.sh` (needs `wasm-pack` and the pinned Rust
-toolchain), or point `VLO_KERNEL_WASM` at a freshly built file. `pnpm --filter @vlo/sdk
+toolchain), or point `VLO_KERNEL_WASM` at a freshly built file. `pnpm --filter @oona/vlo
 test` runs the SDK suite on SQLite; set `VLO_TEST_DATABASE_URL` to also run it on Postgres.
 
 Every verb is also a library call: `dev()`, `serveCommand()`, `doctor()` / `runChecks()`

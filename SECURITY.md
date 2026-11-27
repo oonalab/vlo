@@ -6,7 +6,7 @@ Use GitHub's private vulnerability reporting on this repository (**Security → 
 vulnerability**). Do not open a public issue. You will get an acknowledgement within three
 business days and a fix or mitigation plan within thirty.
 
-Please include the affected package and version (`@vlo/sdk`, `@vlo/agent`, or a crate), a
+Please include the affected package and version (`@oona/vlo` or a crate), a
 reproduction, and the impact as you understand it.
 
 ## Supported versions

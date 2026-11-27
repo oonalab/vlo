@@ -16,7 +16,7 @@ const SQLITE_PREFIX = "sqlite://";
  *
  * @example
  * ```ts
- * import { openJournal } from "@vlo/sdk/host";
+ * import { openJournal } from "@oona/vlo/host";
  *
  * const journal = openJournal("postgres://user:pass@localhost/app", { schema: "vlo", max: 5 });
  * await journal.migrate();

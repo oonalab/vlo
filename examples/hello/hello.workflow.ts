@@ -5,7 +5,7 @@
  * the run's result. Nothing here suspends, so a crash between the two events loses nothing.
  */
 
-import { activity, cmd, defineWorkflow, WorkflowFailure } from "@vlo/sdk";
+import { activity, cmd, defineWorkflow, WorkflowFailure } from "@oona/vlo";
 import { z } from "zod";
 
 export const greet = activity("hello.greet", {

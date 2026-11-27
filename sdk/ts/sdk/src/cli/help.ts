@@ -31,7 +31,7 @@ export function version(): string {
         name?: string;
         version?: string;
       };
-      if (pkg.name === "@vlo/sdk" && typeof pkg.version === "string") return pkg.version;
+      if (pkg.name === "@oona/vlo" && typeof pkg.version === "string") return pkg.version;
     } catch {
       continue;
     }

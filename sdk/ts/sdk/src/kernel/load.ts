@@ -58,7 +58,7 @@ function readWasmBytes(): Uint8Array {
     }
   }
   throw new Error(
-    `vlo kernel wasm not found; run packages/vlo/scripts/build-kernel.sh\n${failures.join("\n")}`,
+    `vlo kernel wasm not found; run scripts/build-kernel.sh\n${failures.join("\n")}`,
   );
 }
 

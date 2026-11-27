@@ -1,0 +1,6 @@
+packages:
+  - sdk/ts/sdk
+  - examples
+
+onlyBuiltDependencies:
+  - esbuild

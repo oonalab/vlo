@@ -86,7 +86,7 @@ bytes the kernel hashes and break the re-fold check. Only `runs.search`, `events
 | `sqlite:///abs/path.db` | SQLite file at an absolute path. |
 | `postgres://…` or `postgresql://…` | Postgres via `pg`; the rest of the URL is passed to the driver. |
 
-`openJournal(url, { schema?, max? })` in `@vlo/sdk/host` picks the adapter by prefix and throws
+`openJournal(url, { schema?, max? })` in `@oona/vlo/host` picks the adapter by prefix and throws
 `unsupported journal url: …` otherwise.
 
 ### Privileges the Postgres role needs
@@ -171,7 +171,7 @@ every byte.
 ## `JournalClosed`
 
 Every journal call made after `close()` rejects with `JournalClosed` (`code: "journal_closed"`,
-exported from `@vlo/sdk/host`). Shutdown is racy by nature — a worker reporting a result while
+exported from `@oona/vlo/host`). Shutdown is racy by nature — a worker reporting a result while
 the host stops — and this is the one recognisable error those late calls get instead of
 whatever the driver does to a closed handle. The dispatcher drops it silently as "shutting
 down" rather than emitting a `warning`.
@@ -187,6 +187,6 @@ kernel write-set plus the child and successor run rows the host derives, atomica
 (`markDispatched`, `deferDispatch`, `heartbeat`), timer and signal methods, and the schema
 registry (`upsertSchema`, `getSchema`).
 
-If you write another adapter, `journalConformance` from `@vlo/sdk/testing` runs the same
+If you write another adapter, `journalConformance` from `@oona/vlo/testing` runs the same
 suite the two built-in journals pass: ordering, disjoint claims, hold expiry, terminal marks,
 idempotent appends. Point it at your `Journal` factory inside a Vitest `describe`.

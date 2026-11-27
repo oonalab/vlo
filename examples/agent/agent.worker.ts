@@ -4,7 +4,7 @@
  * the kernel banks them and the loop's budget is a decision over that total.
  */
 
-import { defineWorker } from "@vlo/sdk";
+import { defineWorker } from "@oona/vlo";
 
 const TOKENS = { decide: 10, draft: 5, rewrite: 5, evaluate: 3 };
 

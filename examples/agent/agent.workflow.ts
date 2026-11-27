@@ -4,8 +4,8 @@
  * failing, keeping everything it has already paid for.
  */
 
-import { agentLoop } from "@vlo/agent";
-import { defineWorkflow } from "@vlo/sdk";
+import { agentLoop } from "@oona/vlo/agent";
+import { defineWorkflow } from "@oona/vlo";
 import { decide, draft, evaluate, rewrite, topup } from "./activities.ts";
 
 export default defineWorkflow(

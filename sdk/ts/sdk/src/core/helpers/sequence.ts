@@ -59,7 +59,7 @@ export type {
  *
  * @example
  * ```ts
- * import { defineWorkflow, resultOf, sequence, step } from "@vlo/sdk";
+ * import { defineWorkflow, resultOf, sequence, step } from "@oona/vlo";
  * import { finish, notify, plan } from "./activities.ts";
  *
  * export default defineWorkflow("example", sequence([
@@ -101,7 +101,7 @@ export function step<I, O>(
  *
  * @example
  * ```ts
- * import { defineWorkflow, fanOut, resultOf, sequence, step } from "@vlo/sdk";
+ * import { defineWorkflow, fanOut, resultOf, sequence, step } from "@oona/vlo";
  * import { plan, work } from "./activities.ts";
  *
  * export default defineWorkflow("example", sequence([
@@ -140,7 +140,7 @@ export function fanOut<I, O>(
  *
  * @example
  * ```ts
- * import { defineWorkflow, fanOutRuns, fanOutRunsResultsOf, resultOf, sequence, step } from "@vlo/sdk";
+ * import { defineWorkflow, fanOutRuns, fanOutRunsResultsOf, resultOf, sequence, step } from "@oona/vlo";
  * import { plan, summarise } from "./activities.ts";
  * import { readSource } from "./read-source.workflow.ts";
  *
@@ -181,7 +181,7 @@ export function fanOutRuns<I extends Json = Json>(
  *
  * @example
  * ```ts
- * import { defineWorkflow, sequence, signalOf, step, waitFor } from "@vlo/sdk";
+ * import { defineWorkflow, sequence, signalOf, step, waitFor } from "@oona/vlo";
  * import { approve, finish, plan } from "./activities.ts";
  *
  * export default defineWorkflow("example", sequence([
@@ -208,7 +208,7 @@ export function waitFor<T>(definition: SignalDef<T>, options: WaitForOptions = {
  *
  * @example
  * ```ts
- * import { defineWorkflow, sequence, sleep, step } from "@vlo/sdk";
+ * import { defineWorkflow, sequence, sleep, step } from "@oona/vlo";
  * import { plan, finish } from "./activities.ts";
  *
  * export default defineWorkflow("example", sequence([
@@ -237,7 +237,7 @@ export function sleep(ms: number): SeqStep {
  * ```ts
  * import {
  *   defineWorkflow, fanOut, fanOutResultsOf, resultOf, sequence, signalOf, step, waitFor,
- * } from "@vlo/sdk";
+ * } from "@oona/vlo";
  * import { approve, finish, plan, work } from "./activities.ts";
  *
  * export default defineWorkflow("example", sequence([

@@ -7,7 +7,7 @@ compute while it waits, and resumes the moment the reply lands.
 
 ```ts
 import { z } from "zod";
-import { signal } from "@vlo/sdk";
+import { signal } from "@oona/vlo";
 
 export const approve = signal("example.approve", z.object({ by: z.string() }));
 ```

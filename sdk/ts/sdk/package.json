@@ -1,17 +1,17 @@
 {
-  "name": "@vlo/sdk",
+  "name": "@oona/vlo",
   "version": "0.1.0",
-  "description": "Vlo: an event-sourced durable execution engine. Workflows are pure reducers; the kernel is Rust compiled to wasm; your Postgres or SQLite is the journal.",
+  "description": "Vlo: an event-sourced durable execution engine for workflows and agents. Workflows are pure reducers; the kernel is Rust compiled to wasm; your Postgres or SQLite is the journal.",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/oona/orbi.git",
-    "directory": "packages/vlo/sdk/ts/sdk"
+    "url": "git+https://github.com/oonalab/vlo.git",
+    "directory": "sdk/ts/sdk"
   },
-  "homepage": "https://github.com/oona/orbi/tree/main/packages/vlo#readme",
-  "bugs": "https://github.com/oona/orbi/issues",
+  "homepage": "https://github.com/oonalab/vlo#readme",
+  "bugs": "https://github.com/oonalab/vlo/issues",
   "keywords": [
     "workflow",
     "durable-execution",
@@ -20,7 +20,9 @@
     "wasm",
     "agents",
     "postgres",
-    "sqlite"
+    "sqlite",
+    "llm",
+    "budget"
   ],
   "publishConfig": {
     "access": "public"
@@ -50,6 +52,10 @@
     "./testing": {
       "types": "./dist/testing.d.ts",
       "import": "./dist/testing.js"
+    },
+    "./agent": {
+      "types": "./dist/agent.d.ts",
+      "import": "./dist/agent.js"
     },
     "./package.json": "./package.json"
   },
