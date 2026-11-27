@@ -1,0 +1,24 @@
+name: PR title
+
+# PRs are squash-merged, so the PR title becomes the commit on main, and release-please
+# reads that commit to pick the next version and write the changelog line.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  conventional:
+    name: Conventional Commit title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Passed through the environment, never interpolated into the script.
+      - name: Check the title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: ./scripts/check-pr-title.sh "$PR_TITLE"

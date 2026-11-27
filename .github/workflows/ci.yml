@@ -1,0 +1,208 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  # release.yml runs these gates before it publishes.
+  workflow_call:
+
+permissions:
+  contents: read
+
+# When called from release.yml, `github.workflow` is the caller's name, so a release run
+# and the ordinary push run on main never cancel each other.
+concurrency:
+  group: ${{ github.workflow }}-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine:
+    name: Kernel + SDK
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: vlo
+          POSTGRES_PASSWORD: vlo
+          POSTGRES_DB: vlo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vlo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      VLO_TEST_DATABASE_URL: postgres://vlo:vlo@localhost:5432/vlo
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Matches rust-toolchain.toml (channel + wasm32 target).
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.98.1
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      # Pinned: the version that built the committed wasm bindings.
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack@0.12.1
+
+      - name: Rust format
+        run: cargo fmt --all --check
+
+      - name: Rust lint
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      # `--locked`: a release bumps the crate versions in Cargo.lock, and this fails if the
+      # lockfile ever falls out of step with Cargo.toml.
+      - name: Rust tests
+        run: cargo test --workspace --locked
+
+      # Built next to the committed artifact, never over it.
+      - name: Build kernel wasm
+        env:
+          VLO_WASM_OUT: ${{ runner.temp }}/vlo-wasm-ci
+        run: ./scripts/build-kernel.sh
+
+      # Hard gate: the generated protocol schema is text and fully deterministic.
+      - name: Protocol schema is current
+        run: git diff --exit-code -- schema
+
+      # Soft gate: rustc on macOS arm64 and Linux x86_64 do not emit bit-identical
+      # wasm for the same source, so byte drift is reported, not fatal. The hard
+      # equivalence check is below: both builds must pass every golden fixture.
+      - name: Kernel wasm byte drift (informational)
+        id: drift
+        continue-on-error: true
+        run: cmp "$RUNNER_TEMP/vlo-wasm-ci/vlo_kernel_bg.wasm" sdk/ts/sdk/wasm/vlo_kernel_bg.wasm
+
+      - name: Upload CI-built wasm for inspection
+        if: steps.drift.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vlo-kernel-wasm-linux
+          path: ${{ runner.temp }}/vlo-wasm-ci/vlo_kernel_bg.wasm
+
+      # Reads the pnpm version from `packageManager` in package.json.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.22.1"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck SDK and examples
+        run: pnpm -r typecheck
+
+      # Committed wasm against the fixtures, plus every other SDK test. The Postgres
+      # conformance suite runs because VLO_TEST_DATABASE_URL is set.
+      - name: Test SDK
+        run: pnpm --filter @oona/vlo test
+
+      # CI-built wasm against the same fixtures: proves source and committed artifact agree.
+      # `exec vitest run <path>` so only the fixture replay runs here, not the whole suite.
+      - name: Kernel source matches committed wasm
+        env:
+          VLO_KERNEL_WASM: ${{ runner.temp }}/vlo-wasm-ci/vlo_kernel_bg.wasm
+        run: pnpm --filter @oona/vlo exec vitest run src/kernel
+
+      - name: Build SDK
+        run: pnpm --filter @oona/vlo build
+
+      - name: Size budgets
+        run: pnpm --filter @oona/vlo size
+
+  # Reference docs are a gate: every public item documented, every link resolves.
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.98.1
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Rust API docs
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --workspace --no-deps
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.22.1"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # `treatWarningsAsErrors` + `validation.notDocumented`: an undocumented export fails here.
+      - name: TypeScript API docs
+        run: pnpm --filter @oona/vlo docs:api
+
+      - name: Markdown links
+        run: node scripts/check-links.mjs
+
+      - name: Upload API docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: vlo-api-docs
+          path: |
+            docs/api
+            target/doc
+
+  # What users install is the tarball, not `src/`: pack it, install it into an empty
+  # project and run it, on the oldest supported Node line and the one CI develops on.
+  package:
+    name: Published package (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22", "24.22.1"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build SDK
+        run: pnpm --filter @oona/vlo build
+
+      - name: Pack, install and run the tarball
+        run: ./scripts/smoke-package.sh

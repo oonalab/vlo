@@ -35,19 +35,34 @@ Two generated artifacts are committed and CI checks them:
 
 ## What CI gates
 
-The workflow runs four jobs. A change must pass all of them.
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. It has three
+jobs, and a change must pass all of them.
 
 1. **Kernel + SDK** — `cargo fmt`, `cargo clippy -D warnings`, `cargo test`, wasm build,
-   protocol schema unchanged, SDK typecheck + tests, the CI-built wasm replays every golden
-   fixture through the TypeScript kernel loader (`VLO_KERNEL_WASM`), SDK build, size budgets
+   protocol schema unchanged, typecheck, the full SDK suite on SQLite and on a Postgres 16
+   service, the CI-built wasm replays every golden fixture through the TypeScript kernel
+   loader (`VLO_KERNEL_WASM`), SDK build, size budgets
    (`sdk/ts/sdk/scripts/size-gate.mjs`: wasm ≤ 1 MiB, runtime JS reachable from `index.js` + `host.js` ≤ 256 KB, CLI-only JS ≤ 96 KB, and `cli.js` must never be reachable from the runtime).
 2. **Docs** — `cargo doc` with warnings as errors, TypeDoc with `notDocumented` as an
    error, `scripts/check-links.mjs` (every relative Markdown link resolves inside the
-   package; no page references the monorepo Vlo was extracted from).
-3. **Standalone build** — the package installs and typechecks with nothing outside it.
+   repository; no page references the monorepo Vlo was extracted from).
+3. **Published package** — `scripts/smoke-package.sh` packs `@oona/vlo`, installs the
+   tarball into an empty project, imports every entry point and runs `vlo --version`, on
+   Node 22 and Node 24. The test suite runs against `src/`, so this is the only gate that
+   sees a broken `exports` entry, a file missing from `files` or a `bin` that does not start.
 
 Byte-level wasm drift between macOS and Linux builds is reported, not fatal; the fixture
 replay is the equivalence check.
+
+Run the same gates locally before pushing:
+
+```sh
+cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+pnpm -r typecheck && pnpm test
+pnpm build && pnpm --filter @oona/vlo size && ./scripts/smoke-package.sh
+pnpm docs:api && pnpm check:links
+```
 
 ## Making a change
 
@@ -69,30 +84,72 @@ replay is the equivalence check.
 
 - One concern per PR. Describe the behaviour change, not the diff.
 - Include tests: a fixture for kernel behaviour, a vitest for host behaviour.
-- Update `CHANGELOG.md` under **Unreleased**.
-- Commit messages: imperative subject ≤ 72 characters, a body that says why.
+- **The PR title is a [Conventional Commit](https://www.conventionalcommits.org/)**:
+  `type(optional-scope): summary`. PRs are squash-merged, so the title becomes the commit on
+  `main`, and that commit decides the next version and becomes the changelog line. The
+  `PR title` check enforces the format (`scripts/check-pr-title.sh`).
+- Do not edit `CHANGELOG.md` or any version number; the release automation owns both.
+
+| Title starts with | Changelog section | Version bump below 1.0 | From 1.0 on |
+|---|---|---|---|
+| `fix:` | Bug Fixes | patch | patch |
+| `feat:` | Features | patch | minor |
+| `feat!:`, `fix!:` or a `BREAKING CHANGE:` footer | Breaking Changes | minor | major |
+| `perf:`, `revert:` | listed | patch | patch |
+| `docs:`, `refactor:`, `test:`, `build:`, `ci:`, `chore:` | hidden | none | none |
+
+Write the summary for a user reading the changelog: what changed for them, in the
+imperative, with no trailing full stop.
 
 ## Releasing
 
+Releases are cut by `.github/workflows/release.yml`, using
+[release-please](https://github.com/googleapis/release-please) and npm
+[trusted publishing](https://docs.npmjs.com/trusted-publishers). Nobody runs `npm publish`
+by hand and no npm token is stored.
+
+1. **Merge PRs to `main`.** After each merge the workflow opens or updates one pull request
+   titled `chore(main): release <version>`. It carries the next version and the new
+   changelog entry, both derived from the commits since the last release.
+2. **Review that Release PR.** The version is bumped in `sdk/ts/sdk/package.json`,
+   `Cargo.toml`, `Cargo.lock` and `.release-please-manifest.json`; the entry is added to
+   `CHANGELOG.md`. Leave it open to batch more changes into one release.
+3. **Merge it to ship.** The workflow tags `v<version>`, creates the GitHub release, runs
+   every CI gate, runs `scripts/smoke-package.sh` and publishes `@oona/vlo` to npm with a
+   provenance attestation.
+
+Two things to know:
+
+- Pull requests opened by the workflow's own token do not start other workflows, so the
+  Release PR shows no CI checks. The gates run after the merge and before the publish; a
+  failure there stops the publish and leaves the tag in place. Fix forward with a new PR.
+- To force a version, add a `Release-As: 1.0.0` footer to a commit on `main`.
+
 `@oona/vlo` is the only published package; `examples` and the workspace root are private.
-The package and the `vlo-*` crates share one version.
+The crates are not published to crates.io.
+
+### One-time setup
+
+Trusted publishing can only be attached to a package that already exists, so 0.1.0 was
+published by hand. For a new package, or to repeat the setup:
 
 ```sh
-# 1. set the version in sdk/ts/sdk/package.json and Cargo.toml; move CHANGELOG.md's
-#    Unreleased entries under the new version
-pnpm install
-pnpm -r typecheck && pnpm test                  # everything green
-pnpm build && pnpm --filter @oona/vlo size      # dist/ and the size budgets
+pnpm install && pnpm build && ./scripts/smoke-package.sh
 cd sdk/ts/sdk
-pnpm pack --dry-run                             # read the file list: dist/, wasm/, README, LICENSE, NOTICE
-npm whoami                                      # must be a member of the `oona` npm org
-pnpm publish --access public                    # asks for a 2FA code
-git tag v<version> && git push --tags
+npm login                                        # a member of the `oona` npm org
+npm publish --access public                      # asks for a 2FA code
+git tag v0.1.0 && git push origin v0.1.0         # the baseline release-please counts from
+gh release create v0.1.0 --title v0.1.0 --notes "First release. See CHANGELOG.md."
 ```
 
-Publish with `pnpm publish`, not `npm publish`: `prepack` copies `LICENSE` and `NOTICE` in
-from the repo root either way, but only pnpm understands the workspace. A published version
-number can never be reused, so check the dry run before the real one.
+Then, once:
+
+- **npmjs.com** → the package → Settings → Trusted Publisher → GitHub Actions:
+  organization `oonalab`, repository `vlo`, workflow filename `release.yml`.
+- **GitHub** → Settings → Actions → General → Workflow permissions: allow GitHub Actions
+  to create and approve pull requests.
+- **GitHub** → Settings → General → Pull Requests: allow squash merging only, with the
+  default commit message set to the pull request title.
 
 ## Reporting
 
