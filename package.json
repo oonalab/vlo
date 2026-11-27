@@ -12,6 +12,16 @@
     "test": "pnpm --filter @oona/vlo test",
     "typecheck": "pnpm -r typecheck",
     "docs:api": "pnpm --filter @oona/vlo docs:api",
-    "check:links": "node scripts/check-links.mjs"
+    "check:links": "node scripts/check-links.mjs",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "docs:publish": "./scripts/publish-docs.sh"
+  },
+  "devDependencies": {
+    "mermaid": "^11.17.2",
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-llms": "^1.15.0",
+    "vitepress-plugin-mermaid": "^2.0.17"
   }
 }

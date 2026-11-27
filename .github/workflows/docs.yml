@@ -1,0 +1,70 @@
+name: Docs
+
+# Publishes the docs site: the guides in docs/, the TypeScript API reference and the Rust
+# API reference, built from the same commit and pushed to the `gh-pages` branch that GitHub
+# Pages serves. The work is in scripts/publish-docs.sh, which a maintainer can also run by
+# hand (`pnpm docs:publish`) if Actions is unavailable.
+on:
+  push:
+    branches:
+      - main
+    # Only what the site is built from.
+    paths:
+      - docs/**
+      - sdk/ts/**
+      - crates/**
+      - Cargo.toml
+      - Cargo.lock
+      - README.md
+      - package.json
+      - pnpm-lock.yaml
+      - scripts/publish-docs.sh
+      - .github/workflows/docs.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One publish at a time. A newer push waits, then replaces the site with its own build.
+concurrency:
+  group: docs
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish site
+    runs-on: ubuntu-latest
+    permissions:
+      # Pushes the built site to `gh-pages`.
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.98.1
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.22.1"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and publish
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: ./scripts/publish-docs.sh

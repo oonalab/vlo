@@ -85,12 +85,16 @@ lives in [`examples/`](examples/hello/README.md). Each runs with one command.
 
 ## Documentation
 
+The docs are published at **<https://oonalab.github.io/vlo/>**, with the TypeScript and Rust
+API references alongside.
+
 Start with [Getting started](docs/getting-started.md), then [Concepts](docs/concepts.md).
 The full index is [docs/README.md](docs/README.md): workflows, activities and workers,
 signals and humans, agents, configuration, CLI, deployment, journal, HTTP API,
 observability, errors, kernel protocol, architecture, design decisions, limits.
 
-API reference: `pnpm --filter @oona/vlo docs:api` (TypeDoc) and `cargo doc --workspace --open`.
+To build the API reference locally: `pnpm --filter @oona/vlo docs:api` (TypeDoc) and
+`cargo doc --workspace --open`. `pnpm docs:dev` previews the site.
 
 ## Layout
 
